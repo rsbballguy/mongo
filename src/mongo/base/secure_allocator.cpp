@@ -44,7 +44,7 @@
 #endif
 
 #include "mongo/base/init.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_map.h"
 #include "mongo/util/assert_util.h"
 #include "mongo/util/log.h"
@@ -113,7 +113,7 @@ void EnablePrivilege(const wchar_t* name) {
  * size, and then raising the working set. This is the same reason that "i++" has race conditions
  * across multiple threads.
  */
-stdx::mutex workingSizeMutex;
+Mutex workingSizeMutex;
 
 /**
  * There is a minimum gap between the minimum working set size and maximum working set size.
@@ -128,7 +128,7 @@ void growWorkingSize(std::size_t bytes) {
     size_t minWorkingSetSize;
     size_t maxWorkingSetSize;
 
-    stdx::lock_guard<stdx::mutex> lock(workingSizeMutex);
+    stdx::lock_guard<Mutex> lock(workingSizeMutex);
 
     if (!GetProcessWorkingSetSize(GetCurrentProcess(), &minWorkingSetSize, &maxWorkingSetSize)) {
         auto str = errnoWithPrefix("Failed to GetProcessWorkingSetSize");
@@ -331,7 +331,7 @@ private:
 };
 
 // See secure_allocator_details::allocate for a more detailed comment on what these are used for
-stdx::mutex allocatorMutex;  // Protects the values below
+Mutex allocatorMutex;  // Protects the values below
 stdx::unordered_map<void*, std::shared_ptr<Allocation>> secureTable;
 std::shared_ptr<Allocation> lastAllocation = nullptr;
 
@@ -357,7 +357,7 @@ namespace secure_allocator_details {
  * pages when we're not using them anymore.
  */
 void* allocate(std::size_t bytes, std::size_t alignOf) {
-    stdx::lock_guard<stdx::mutex> lk(allocatorMutex);
+    stdx::lock_guard<Mutex> lk(allocatorMutex);
 
     if (lastAllocation) {
         auto out = lastAllocation->allocate(bytes, alignOf);
@@ -382,7 +382,7 @@ void* allocate(std::size_t bytes, std::size_t alignOf) {
 void deallocate(void* ptr, std::size_t bytes) {
     secureZeroMemory(ptr, bytes);
 
-    stdx::lock_guard<stdx::mutex> lk(allocatorMutex);
+    stdx::lock_guard<Mutex> lk(allocatorMutex);
 
     secureTable.erase(ptr);
 }
