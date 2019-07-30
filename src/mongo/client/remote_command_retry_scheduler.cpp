@@ -167,7 +167,7 @@ RemoteCommandRetryScheduler::~RemoteCommandRetryScheduler() {
 }
 
 bool RemoteCommandRetryScheduler::isActive() const {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     return _isActive_inlock();
 }
 
@@ -176,7 +176,7 @@ bool RemoteCommandRetryScheduler::_isActive_inlock() const {
 }
 
 Status RemoteCommandRetryScheduler::startup() {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
 
     switch (_state) {
         case State::kPreStart:
@@ -202,7 +202,7 @@ Status RemoteCommandRetryScheduler::startup() {
 void RemoteCommandRetryScheduler::shutdown() {
     executor::TaskExecutor::CallbackHandle remoteCommandCallbackHandle;
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         switch (_state) {
             case State::kPreStart:
                 // Transition directly from PreStart to Complete if not started yet.
@@ -225,12 +225,12 @@ void RemoteCommandRetryScheduler::shutdown() {
 }
 
 void RemoteCommandRetryScheduler::join() {
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
     _condition.wait(lock, [this]() { return !_isActive_inlock(); });
 }
 
 std::string RemoteCommandRetryScheduler::toString() const {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     str::stream output;
     output << "RemoteCommandRetryScheduler";
     output << " request: " << _request.toString();
@@ -263,7 +263,7 @@ void RemoteCommandRetryScheduler::_remoteCommandCallback(
 
     // Use a lambda to avoid unnecessary lock acquisition when checking conditions for termination.
     auto getCurrentAttempt = [this]() {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         return _currentAttempt;
     };
 
@@ -277,7 +277,7 @@ void RemoteCommandRetryScheduler::_remoteCommandCallback(
     // TODO(benety): Check cumulative elapsed time of failed responses received against retry
     // policy. Requires SERVER-24067.
     auto scheduleStatus = [this]() {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         if (State::kShuttingDown == _state) {
             return Status(ErrorCodes::CallbackCanceled,
                           "scheduler was shut down before retrying command");
@@ -302,7 +302,7 @@ void RemoteCommandRetryScheduler::_onComplete(
     // RemoteCommandRetryScheduler, we release this function object outside the lock.
     _callback = {};
 
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     invariant(_isActive_inlock());
     _state = State::kComplete;
     _condition.notify_all();

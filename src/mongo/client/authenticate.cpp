@@ -44,7 +44,7 @@
 #include "mongo/db/server_options.h"
 #include "mongo/rpc/get_status_from_command_result.h"
 #include "mongo/rpc/op_msg_rpc_impls.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/log.h"
 #include "mongo/util/net/ssl_manager.h"
 #include "mongo/util/net/ssl_options.h"
@@ -186,13 +186,13 @@ Future<void> authenticateClient(const BSONObj& params,
 
 AuthMongoCRHandler authMongoCR = authMongoCRImpl;
 
-static stdx::mutex internalAuthKeysMutex;
+static Mutex internalAuthKeysMutex;
 static bool internalAuthSet = false;
 static std::vector<std::string> internalAuthKeys;
 static BSONObj internalAuthParams;
 
 void setInternalAuthKeys(const std::vector<std::string>& keys) {
-    stdx::lock_guard<stdx::mutex> lk(internalAuthKeysMutex);
+    stdx::lock_guard<Mutex> lk(internalAuthKeysMutex);
 
     internalAuthKeys = keys;
     fassert(50996, internalAuthKeys.size() > 0);
@@ -200,24 +200,24 @@ void setInternalAuthKeys(const std::vector<std::string>& keys) {
 }
 
 void setInternalUserAuthParams(BSONObj obj) {
-    stdx::lock_guard<stdx::mutex> lk(internalAuthKeysMutex);
+    stdx::lock_guard<Mutex> lk(internalAuthKeysMutex);
     internalAuthParams = obj.getOwned();
     internalAuthKeys.clear();
     internalAuthSet = true;
 }
 
 bool hasMultipleInternalAuthKeys() {
-    stdx::lock_guard<stdx::mutex> lk(internalAuthKeysMutex);
+    stdx::lock_guard<Mutex> lk(internalAuthKeysMutex);
     return internalAuthSet && internalAuthKeys.size() > 1;
 }
 
 bool isInternalAuthSet() {
-    stdx::lock_guard<stdx::mutex> lk(internalAuthKeysMutex);
+    stdx::lock_guard<Mutex> lk(internalAuthKeysMutex);
     return internalAuthSet;
 }
 
 BSONObj getInternalAuthParams(size_t idx, const std::string& mechanism) {
-    stdx::lock_guard<stdx::mutex> lk(internalAuthKeysMutex);
+    stdx::lock_guard<Mutex> lk(internalAuthKeysMutex);
     if (!internalAuthSet) {
         return BSONObj();
     }
