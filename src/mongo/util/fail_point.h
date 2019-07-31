@@ -35,7 +35,7 @@
 #include "mongo/db/jsobj.h"
 #include "mongo/db/operation_context.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -179,7 +179,7 @@ private:
     BSONObj _data;
 
     // protects _mode, _timesOrPeriod, _data
-    mutable stdx::mutex _modMutex;
+    mutable Mutex _modMutex;
 
     /**
      * Enables this fail point.

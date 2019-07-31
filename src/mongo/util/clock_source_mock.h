@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/clock_source.h"
 #include "mongo/util/time_support.h"
 
@@ -67,9 +67,9 @@ public:
 
 private:
     using Alarm = std::pair<Date_t, unique_function<void()>>;
-    void _processAlarms(stdx::unique_lock<stdx::mutex> lk);
+    void _processAlarms(stdx::unique_lock<Mutex> lk);
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
     Date_t _now{Date_t::fromMillisSinceEpoch(1)};
     std::vector<Alarm> _alarms;
 };

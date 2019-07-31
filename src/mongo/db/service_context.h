@@ -39,8 +39,8 @@
 #include "mongo/db/logical_session_id.h"
 #include "mongo/db/storage/storage_engine.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_set.h"
 #include "mongo/transport/service_executor.h"
 #include "mongo/transport/session.h"
@@ -163,7 +163,7 @@ public:
         Client* next();
 
     private:
-        stdx::unique_lock<stdx::mutex> _lock;
+        stdx::unique_lock<Mutex> _lock;
         ClientSet::const_iterator _curr;
         ClientSet::const_iterator _end;
     };
@@ -530,7 +530,7 @@ private:
         std::unique_ptr<ClientObserver> _observer;
     };
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     /**
      * The periodic runner.
@@ -591,7 +591,7 @@ private:
     AtomicWord<unsigned> _nextOpId{1};
 
     bool _startupComplete = false;
-    stdx::condition_variable _startupCompleteCondVar;
+    ConditionVariable _startupCompleteCondVar;
 };
 
 /**

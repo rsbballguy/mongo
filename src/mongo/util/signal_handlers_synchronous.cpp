@@ -156,12 +156,12 @@ public:
     }
 
 private:
-    static stdx::mutex _streamMutex;
+    static Mutex _streamMutex;
     static thread_local int terminateDepth;
-    stdx::unique_lock<stdx::mutex> _lk;
+    stdx::unique_lock<Mutex> _lk;
 };
 
-stdx::mutex MallocFreeOStreamGuard::_streamMutex;
+Mutex MallocFreeOStreamGuard::_streamMutex;
 thread_local int MallocFreeOStreamGuard::terminateDepth = 0;
 
 // must hold MallocFreeOStreamGuard to call

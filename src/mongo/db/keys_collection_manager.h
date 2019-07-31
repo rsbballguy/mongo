@@ -37,7 +37,7 @@
 #include "mongo/db/keys_collection_cache.h"
 #include "mongo/db/keys_collection_document.h"
 #include "mongo/db/keys_collection_manager_gen.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/concurrency/notification.h"
 #include "mongo/util/duration.h"
@@ -169,9 +169,9 @@ private:
                                 std::string threadName,
                                 Milliseconds refreshInterval);
 
-        stdx::mutex _mutex;  // protects all the member variables below.
+        Mutex _mutex;  // protects all the member variables below.
         std::shared_ptr<Notification<void>> _refreshRequest;
-        stdx::condition_variable _refreshNeededCV;
+        ConditionVariable _refreshNeededCV;
 
         stdx::thread _backgroundThread;
         std::shared_ptr<RefreshFunc> _doRefresh;

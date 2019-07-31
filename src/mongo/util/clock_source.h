@@ -31,13 +31,12 @@
 
 #include <type_traits>
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/util/functional.h"
 #include "mongo/util/time_support.h"
 
 namespace mongo {
-
+class Mutex;
 class Date_t;
 
 /**
@@ -90,8 +89,8 @@ public:
      * Like cv.wait_until(m, deadline), but uses this ClockSource instead of
      * stdx::chrono::system_clock to measure the passage of time.
      */
-    stdx::cv_status waitForConditionUntil(stdx::condition_variable& cv,
-                                          stdx::unique_lock<stdx::mutex>& m,
+    stdx::cv_status waitForConditionUntil(ConditionVariable& cv,
+                                          stdx::unique_lock<Mutex>& m,
                                           Date_t deadline,
                                           Waitable* waitable = nullptr);
 
@@ -100,8 +99,8 @@ public:
      * stdx::chrono::system_clock to measure the passage of time.
      */
     template <typename Pred, std::enable_if_t<CouldBePredicate<Pred>::value, int> = 0>
-    bool waitForConditionUntil(stdx::condition_variable& cv,
-                               stdx::unique_lock<stdx::mutex>& m,
+    bool waitForConditionUntil(ConditionVariable& cv,
+                               stdx::unique_lock<Mutex>& m,
                                Date_t deadline,
                                const Pred& pred,
                                Waitable* waitable = nullptr) {
@@ -120,8 +119,8 @@ public:
     template <typename Duration,
               typename Pred,
               std::enable_if_t<CouldBePredicate<Pred>::value, int> = 0>
-    bool waitForConditionFor(stdx::condition_variable& cv,
-                             stdx::unique_lock<stdx::mutex>& m,
+    bool waitForConditionFor(ConditionVariable& cv,
+                             stdx::unique_lock<Mutex>& m,
                              Duration duration,
                              const Pred& pred,
                              Waitable* waitable = nullptr) {

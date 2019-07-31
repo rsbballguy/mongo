@@ -36,7 +36,7 @@
 #include "mongo/db/baton.h"
 
 #include "mongo/base/status.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/assert_util.h"
 
 namespace mongo {
@@ -121,7 +121,7 @@ public:
     }
 
 private:
-    void _runJobs(stdx::unique_lock<stdx::mutex> lk, Status status) {
+    void _runJobs(stdx::unique_lock<Mutex> lk, Status status) {
         if (status.isOK() && _isDead) {
             status = kDetached;
         }
@@ -140,7 +140,7 @@ private:
 
     BatonHandle _baton;
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
     bool _isDead = false;
     std::vector<Task> _scheduled;
 };

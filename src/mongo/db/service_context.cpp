@@ -96,7 +96,7 @@ ServiceContext::ServiceContext()
       _preciseClockSource(std::make_unique<SystemClockSource>()) {}
 
 ServiceContext::~ServiceContext() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     for (const auto& client : _clients) {
         severe() << "Client " << client->desc() << " still exists while destroying ServiceContext@"
                  << static_cast<void*>(this);
@@ -161,7 +161,7 @@ ServiceContext::UniqueClient ServiceContext::makeClient(std::string desc,
     std::unique_ptr<Client> client(new Client(std::move(desc), this, std::move(session)));
     onCreate(client.get(), _clientObservers);
     {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         invariant(_clients.insert(client.get()).second);
     }
     return UniqueClient(client.release());
@@ -225,7 +225,7 @@ void ServiceContext::setServiceExecutor(std::unique_ptr<transport::ServiceExecut
 void ServiceContext::ClientDeleter::operator()(Client* client) const {
     ServiceContext* const service = client->getServiceContext();
     {
-        stdx::lock_guard<stdx::mutex> lk(service->_mutex);
+        stdx::lock_guard<Mutex> lk(service->_mutex);
         invariant(service->_clients.erase(client));
     }
     onDestroy(client, service->_clientObservers);
@@ -291,7 +291,7 @@ Client* ServiceContext::LockedClientsCursor::next() {
 }
 
 void ServiceContext::setKillAllOperations() {
-    stdx::lock_guard<stdx::mutex> clientLock(_mutex);
+    stdx::lock_guard<Mutex> clientLock(_mutex);
 
     // Ensure that all newly created operation contexts will immediately be in the interrupted state
     _globalKill.store(true);
@@ -332,17 +332,17 @@ void ServiceContext::unsetKillAllOperations() {
 }
 
 void ServiceContext::registerKillOpListener(KillOpListenerInterface* listener) {
-    stdx::lock_guard<stdx::mutex> clientLock(_mutex);
+    stdx::lock_guard<Mutex> clientLock(_mutex);
     _killOpListeners.push_back(listener);
 }
 
 void ServiceContext::waitForStartupComplete() {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _startupCompleteCondVar.wait(lk, [this] { return _startupComplete; });
 }
 
 void ServiceContext::notifyStartupComplete() {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _startupComplete = true;
     lk.unlock();
     _startupCompleteCondVar.notify_all();

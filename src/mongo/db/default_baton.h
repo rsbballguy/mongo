@@ -32,8 +32,8 @@
 #include <vector>
 
 #include "mongo/db/baton.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/functional.h"
 
 namespace mongo {
@@ -62,8 +62,8 @@ public:
 private:
     void detachImpl() noexcept override;
 
-    stdx::mutex _mutex;
-    stdx::condition_variable _cv;
+    Mutex _mutex;
+    ConditionVariable _cv;
     bool _notified = false;
     bool _sleeping = false;
 

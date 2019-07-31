@@ -122,7 +122,7 @@ public:
 
 private:
     boost::optional<HANDLE> _processHandle;
-    stdx::mutex _mutex;
+    Mutex _mutex;
     DWORD _origOptions;
 };
 

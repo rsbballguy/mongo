@@ -127,7 +127,7 @@ public:
     using std::condition_variable_any::wait_for;    // NOLINT
     using std::condition_variable_any::wait_until;  // NOLINT
 
-private:
+protected:
     friend class ::mongo::Waitable;
 
     /**
@@ -203,7 +203,7 @@ private:
         notifyable->_handleContainer.splice(
             notifyable->_handleContainer.begin(), _notifyables, iter);
     }
-
+private:
     AtomicWord<unsigned long long> _notifyableCount;
 
     stdx::mutex _mutex;

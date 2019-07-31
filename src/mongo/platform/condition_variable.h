@@ -30,14 +30,14 @@
 #pragma once
 #include "mongo/platform/basic.h"
 
-#include "mongo/platform/mutex.h"
 #include "mongo/stdx/condition_variable.h"
-#include "mongo/util/diagnostic_info.h"
 
 
 namespace mongo {
+class Mutex;
 class ConditionVariable : private stdx::condition_variable_any {
     using lock_t = stdx::unique_lock<Mutex>;
+    friend class ::mongo::Waitable;
 
 public:
     void wait(lock_t& lock);

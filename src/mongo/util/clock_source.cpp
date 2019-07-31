@@ -28,14 +28,14 @@
  */
 
 #include "mongo/platform/basic.h"
-
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/clock_source.h"
 #include "mongo/util/waitable.h"
 
 namespace mongo {
-stdx::cv_status ClockSource::waitForConditionUntil(stdx::condition_variable& cv,
-                                                   stdx::unique_lock<stdx::mutex>& m,
+stdx::cv_status ClockSource::waitForConditionUntil(ConditionVariable& cv,
+                                                   stdx::unique_lock<Mutex>& m,
                                                    Date_t deadline,
                                                    Waitable* waitable) {
     if (_tracksSystemClock) {
@@ -55,9 +55,9 @@ stdx::cv_status ClockSource::waitForConditionUntil(stdx::condition_variable& cv,
     }
 
     struct AlarmInfo {
-        stdx::mutex controlMutex;
-        stdx::mutex* waitMutex;
-        stdx::condition_variable* waitCV;
+        Mutex controlMutex;
+        Mutex* waitMutex;
+        ConditionVariable* waitCV;
         stdx::cv_status cvWaitResult = stdx::cv_status::no_timeout;
     };
     auto alarmInfo = std::make_shared<AlarmInfo>();
@@ -66,7 +66,7 @@ stdx::cv_status ClockSource::waitForConditionUntil(stdx::condition_variable& cv,
     const auto waiterThreadId = stdx::this_thread::get_id();
     bool invokedAlarmInline = false;
     invariant(setAlarm(deadline, [alarmInfo, waiterThreadId, &invokedAlarmInline] {
-        stdx::lock_guard<stdx::mutex> controlLk(alarmInfo->controlMutex);
+        stdx::lock_guard<Mutex> controlLk(alarmInfo->controlMutex);
         alarmInfo->cvWaitResult = stdx::cv_status::timeout;
         if (!alarmInfo->waitMutex) {
             return;
@@ -79,14 +79,14 @@ stdx::cv_status ClockSource::waitForConditionUntil(stdx::condition_variable& cv,
             invokedAlarmInline = true;
             return;
         }
-        stdx::lock_guard<stdx::mutex> waitLk(*alarmInfo->waitMutex);
+        stdx::lock_guard<Mutex> waitLk(*alarmInfo->waitMutex);
         alarmInfo->waitCV->notify_all();
     }));
     if (!invokedAlarmInline) {
         Waitable::wait(waitable, this, cv, m);
     }
     m.unlock();
-    stdx::lock_guard<stdx::mutex> controlLk(alarmInfo->controlMutex);
+    stdx::lock_guard<Mutex> controlLk(alarmInfo->controlMutex);
     m.lock();
     alarmInfo->waitMutex = nullptr;
     alarmInfo->waitCV = nullptr;

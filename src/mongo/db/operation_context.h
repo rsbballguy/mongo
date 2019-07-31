@@ -41,8 +41,8 @@
 #include "mongo/db/storage/write_unit_of_work.h"
 #include "mongo/db/write_concern_options.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/transport/session.h"
 #include "mongo/util/decorable.h"
 #include "mongo/util/interruptible.h"
@@ -352,8 +352,8 @@ public:
     Microseconds getRemainingMaxTimeMicros() const;
 
     StatusWith<stdx::cv_status> waitForConditionOrInterruptNoAssertUntil(
-        stdx::condition_variable& cv,
-        stdx::unique_lock<stdx::mutex>& m,
+        ConditionVariable& cv,
+        stdx::unique_lock<Mutex>& m,
         Date_t deadline) noexcept override;
 
     bool isIgnoringInterrupts() const;

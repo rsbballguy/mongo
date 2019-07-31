@@ -35,7 +35,7 @@
 #include "mongo/db/traffic_recorder_gen.h"
 #include "mongo/platform/atomic_word.h"
 #include "mongo/rpc/message.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/transport/session.h"
 
 namespace mongo {
@@ -72,7 +72,7 @@ private:
     AtomicWord<bool> _shouldRecord;
 
     // The mutex only protects the last recording shared_ptr
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
     std::shared_ptr<Recording> _recording;
 };
 

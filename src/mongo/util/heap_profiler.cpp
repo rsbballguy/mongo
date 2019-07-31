@@ -282,8 +282,8 @@ private:
     // >1: sample ever sampleIntervalBytes bytes allocated - less accurate but fast and small
     std::atomic_size_t sampleIntervalBytes;  // NOLINT
 
-    stdx::mutex hashtable_mutex;  // guards updates to both object and stack hash tables
-    stdx::mutex stackinfo_mutex;  // guards against races updating the StackInfo bson representation
+    Mutex hashtable_mutex;  // guards updates to both object and stack hash tables
+    Mutex stackinfo_mutex;  // guards against races updating the StackInfo bson representation
 
     // cumulative bytes allocated - determines when samples are taken
     std::atomic_size_t bytesAllocated{0};  // NOLINT
@@ -410,7 +410,7 @@ private:
         Hash stackHash = tempStack.hash();
 
         // Now acquire lock.
-        stdx::lock_guard<stdx::mutex> lk(hashtable_mutex);
+        stdx::lock_guard<Mutex> lk(hashtable_mutex);
 
         // Look up stack in stackHashTable.
         StackInfo* stackInfo = stackHashTable.find(stackHash, tempStack);
@@ -456,7 +456,7 @@ private:
             return;
 
         // Now acquire lock.
-        stdx::lock_guard<stdx::mutex> lk(hashtable_mutex);
+        stdx::lock_guard<Mutex> lk(hashtable_mutex);
 
         // Remove the object from the hash bucket if present.
         ObjInfo* objInfo = objHashTable.find(objHash, obj);
@@ -550,7 +550,7 @@ private:
         statsBuilder.doneFast();
 
         // Guard against races updating the StackInfo bson representation.
-        stdx::lock_guard<stdx::mutex> lk(stackinfo_mutex);
+        stdx::lock_guard<Mutex> lk(stackinfo_mutex);
 
         // Traverse stackHashTable accumulating potential stacks to emit.
         // We do this traversal without locking hashtable_mutex because we need to use the heap.

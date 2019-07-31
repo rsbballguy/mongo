@@ -35,8 +35,8 @@
 #include <numeric>
 
 #include "mongo/db/operation_context.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/with_lock.h"
 #include "mongo/util/interruptible.h"
 #include "mongo/util/scopeguard.h"
@@ -167,7 +167,7 @@ template <ConsumerKind isMulti>
 class ConsumerState {
 public:
     // condition variable to block on for waiting consumers
-    stdx::condition_variable& cv() {
+    ConditionVariable& cv() {
         return _cv;
     }
 
@@ -199,7 +199,7 @@ public:
 
 private:
     size_t _data = 0;
-    stdx::condition_variable _cv;
+    ConditionVariable _cv;
 };
 
 /**
@@ -215,7 +215,7 @@ class ProducerState;
  *     explicit ProducerState(const Options&);
  *
  *     // The cv consumers should notify after consumption
- *     stdx::condition_variable& cv();
+ *     ConditionVariable& cv();
  *
  *     // The amount the oldest producer wants to inject
  *     size_t wants() const;
@@ -234,7 +234,7 @@ class ProducerState;
  *         ~Waiter();
  *
  *         // The cv that producer should block on
- *         stdx::condition_variable& cv();
+ *         ConditionVariable& cv();
  *
  *         // If this producer is the current top level producer.  The producer thread should block
  *         // on cv() and check isAtFrontOfQueue() before unblocking.
@@ -252,7 +252,7 @@ class ProducerState<SingleProducer, Options> {
 public:
     explicit ProducerState(const Options&) {}
 
-    stdx::condition_variable& cv() {
+    ConditionVariable& cv() {
         return _cv;
     }
 
@@ -284,7 +284,7 @@ public:
             _x._data = 0;
         }
 
-        stdx::condition_variable& cv() {
+        ConditionVariable& cv() {
             return _x._cv;
         }
 
@@ -299,7 +299,7 @@ public:
 private:
     size_t _data = 0;
 
-    stdx::condition_variable _cv;
+    ConditionVariable _cv;
 };
 
 /**
@@ -315,7 +315,7 @@ public:
     explicit ProducerState(const Options& options)
         : _maxProducerQueueDepth(options.maxProducerQueueDepth) {}
 
-    stdx::condition_variable& cv() {
+    ConditionVariable& cv() {
         return _data.front().cv;
     }
 
@@ -356,7 +356,7 @@ public:
             _x._data.erase(_iter);
         }
 
-        stdx::condition_variable& cv() {
+        ConditionVariable& cv() {
             return _iter->cv;
         }
 
@@ -378,7 +378,7 @@ private:
 
         size_t wants;
         // Each producer has their own cv, so that they can be woken individually in FIFO order
-        stdx::condition_variable cv;
+        ConditionVariable cv;
     };
 
     // A list of producers that want to push to the queue
@@ -468,7 +468,7 @@ public:
     //
     // Leaves T unchanged if an interrupt exception is thrown while waiting for space
     void push(T&& t, Interruptible* interruptible = Interruptible::notInterruptible()) {
-        _pushRunner([&](stdx::unique_lock<stdx::mutex>& lk) {
+        _pushRunner([&](stdx::unique_lock<Mutex>& lk) {
             auto cost = _invokeCostFunc(t, lk);
             uassert(ErrorCodes::ProducerConsumerQueueBatchTooLarge,
                     str::stream() << "cost of item (" << cost
@@ -496,7 +496,7 @@ public:
     void pushMany(StartIterator start,
                   EndIterator last,
                   Interruptible* interruptible = Interruptible::notInterruptible()) {
-        return _pushRunner([&](stdx::unique_lock<stdx::mutex>& lk) {
+        return _pushRunner([&](stdx::unique_lock<Mutex>& lk) {
             size_t cost = 0;
             for (auto iter = start; iter != last; ++iter) {
                 cost += _invokeCostFunc(*iter, lk);
@@ -521,12 +521,12 @@ public:
     // Leaves T unchanged if it fails
     bool tryPush(T&& t) {
         return _pushRunner(
-            [&](stdx::unique_lock<stdx::mutex>& lk) { return _tryPush(lk, std::move(t)); });
+            [&](stdx::unique_lock<Mutex>& lk) { return _tryPush(lk, std::move(t)); });
     }
 
     // Pops one T out of the queue
     T pop(Interruptible* interruptible = Interruptible::notInterruptible()) {
-        return _popRunner([&](stdx::unique_lock<stdx::mutex>& lk) {
+        return _popRunner([&](stdx::unique_lock<Mutex>& lk) {
             _waitForNonEmpty(lk, interruptible);
             return _pop(lk);
         });
@@ -538,7 +538,7 @@ public:
     // Returns the popped values, along with the cost value of the items extracted
     std::pair<std::deque<T>, size_t> popMany(
         Interruptible* interruptible = Interruptible::notInterruptible()) {
-        return _popRunner([&](stdx::unique_lock<stdx::mutex>& lk) {
+        return _popRunner([&](stdx::unique_lock<Mutex>& lk) {
             _waitForNonEmpty(lk, interruptible);
             return std::make_pair(std::exchange(_queue, {}), std::exchange(_current, 0));
         });
@@ -554,7 +554,7 @@ public:
     //
     std::pair<std::deque<T>, size_t> popManyUpTo(
         size_t budget, Interruptible* interruptible = Interruptible::notInterruptible()) {
-        return _popRunner([&](stdx::unique_lock<stdx::mutex>& lk) {
+        return _popRunner([&](stdx::unique_lock<Mutex>& lk) {
             _waitForNonEmpty(lk, interruptible);
 
             if (_current <= budget) {
@@ -584,13 +584,13 @@ public:
 
     // Attempts a non-blocking pop of a value
     boost::optional<T> tryPop() {
-        return _popRunner([&](stdx::unique_lock<stdx::mutex>& lk) { return _tryPop(lk); });
+        return _popRunner([&](stdx::unique_lock<Mutex>& lk) { return _tryPop(lk); });
     }
 
     // Closes the producer end. Consumers will continue to consume until the queue is exhausted, at
     // which time they will begin to throw with an interruption dbexception
     void closeProducerEnd() {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
 
         _producerEndClosed = true;
 
@@ -599,7 +599,7 @@ public:
 
     // Closes the consumer end. This causes all callers to throw with an interruption dbexception
     void closeConsumerEnd() {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
 
         _consumerEndClosed = true;
         _producerEndClosed = true;
@@ -608,7 +608,7 @@ public:
     }
 
     Stats getStats() const {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         Stats stats;
         stats.queueDepth = _current;
         stats.waitingConsumers = _consumers;
@@ -804,7 +804,7 @@ private:
 
     template <typename Callback>
     auto _pushRunner(Callback&& cb) {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
 
         _checkProducerClosed(lk);
 
@@ -815,7 +815,7 @@ private:
 
     template <typename Callback>
     auto _popRunner(Callback&& cb) {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
 
         _checkConsumerClosed(lk);
 
@@ -866,7 +866,7 @@ private:
         return t;
     }
 
-    void _waitForSpace(stdx::unique_lock<stdx::mutex>& lk,
+    void _waitForSpace(stdx::unique_lock<Mutex>& lk,
                        size_t cost,
                        Interruptible* interruptible) {
         // We do some pre-flight checks to avoid creating a cv if we don't need one
@@ -885,7 +885,7 @@ private:
         });
     }
 
-    void _waitForNonEmpty(stdx::unique_lock<stdx::mutex>& lk, Interruptible* interruptible) {
+    void _waitForNonEmpty(stdx::unique_lock<Mutex>& lk, Interruptible* interruptible) {
         typename Consumers::Waiter waiter(_consumers);
 
         interruptible->waitForConditionOrInterrupt(_consumers.cv(), lk, [&] {
@@ -894,7 +894,7 @@ private:
         });
     }
 
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
 
     Options _options;
 

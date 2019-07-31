@@ -53,7 +53,7 @@ BackgroundThreadClockSource::BackgroundThreadClockSource(std::unique_ptr<ClockSo
 
 BackgroundThreadClockSource::~BackgroundThreadClockSource() {
     {
-        stdx::unique_lock<stdx::mutex> lock(_mutex);
+        stdx::unique_lock<Mutex> lock(_mutex);
         _inShutdown = true;
         _condition.notify_one();
     }
@@ -117,7 +117,7 @@ void BackgroundThreadClockSource::_updateClockAndWakeTimerIfNeeded() {
     }
 
     // We may be in timer paused
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     // See if we still observe paused, after taking a lock.  This prevents multiple threads from
     // racing to update the clock.
     if (_state.load() != kTimerPaused) {
@@ -142,7 +142,7 @@ void BackgroundThreadClockSource::_updateClockAndWakeTimerIfNeeded() {
 }
 
 size_t BackgroundThreadClockSource::timesPausedForTest() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _timesPaused;
 }
 
@@ -151,7 +151,7 @@ void BackgroundThreadClockSource::_startTimerThread() {
     // and wakes up to store the current time.
     _timer = stdx::thread([&]() {
         setThreadName("BackgroundThreadClockSource");
-        stdx::unique_lock<stdx::mutex> lock(_mutex);
+        stdx::unique_lock<Mutex> lock(_mutex);
         _started = true;
         _condition.notify_one();
 
@@ -198,7 +198,7 @@ void BackgroundThreadClockSource::_startTimerThread() {
     // Wait for the thread to start. This prevents other threads from calling now() until the timer
     // thread is at its first wait() call. While the code would work without this, it makes startup
     // more predictable and therefore easier to test.
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
     _condition.wait(lock, [this] { return _started; });
 }
 

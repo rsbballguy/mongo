@@ -28,7 +28,7 @@
  */
 #pragma once
 
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/alarm.h"
 #include "mongo/util/concurrency/with_lock.h"
@@ -64,8 +64,8 @@ private:
 
     void _threadRoutine();
 
-    stdx::mutex _mutex;
-    stdx::condition_variable _condVar;
+    Mutex _mutex;
+    ConditionVariable _condVar;
     bool _running = false;
     Date_t _nextAlarm = Date_t::max();
     std::vector<AlarmSchedulerHandle> _schedulers;

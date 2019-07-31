@@ -38,7 +38,7 @@
 #include "mongo/db/catalog/commit_quorum_options.h"
 #include "mongo/db/index/index_descriptor.h"
 #include "mongo/db/namespace_string.h"
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/util/future.h"
 #include "mongo/util/net/hostandport.h"
 #include "mongo/util/uuid.h"
@@ -106,7 +106,7 @@ struct ReplIndexBuildState {
     IndexBuildProtocol protocol;
 
     // Protects the state below.
-    mutable stdx::mutex mutex;
+    mutable Mutex mutex;
 
     // Secondaries do not set this information, so it is only set on primaries or on
     // transition to primary.
@@ -136,7 +136,7 @@ struct ReplIndexBuildState {
 
     // The coordinator for the index build will wait upon this when awaiting an external signal,
     // such as commit or commit readiness signals.
-    stdx::condition_variable condVar;
+    ConditionVariable condVar;
 
 private:
     std::vector<std::string> extractIndexNames(const std::vector<BSONObj>& specs) {

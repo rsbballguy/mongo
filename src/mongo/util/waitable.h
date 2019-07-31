@@ -29,15 +29,15 @@
 
 #pragma once
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/clock_source.h"
 #include "mongo/util/time_support.h"
 
 namespace mongo {
 
 /**
- * Waitable is a lightweight type that can be used with stdx::condition_variable and can do other
+ * Waitable is a lightweight type that can be used with ConditionVariable and can do other
  * work while the condvar 'waits'.
  *
  * It handles this dance by using a special hook that condvar provides to register itself (as a
@@ -51,8 +51,8 @@ class Waitable : public Notifyable {
 public:
     static void wait(Waitable* waitable,
                      ClockSource* clkSource,
-                     stdx::condition_variable& cv,
-                     stdx::unique_lock<stdx::mutex>& lk) {
+                     ConditionVariable& cv,
+                     stdx::unique_lock<Mutex>& lk) {
         if (waitable) {
             cv._runWithNotifyable(*waitable, [&]() noexcept {
                 lk.unlock();
@@ -67,8 +67,8 @@ public:
     template <typename Predicate>
     static void wait(Waitable* waitable,
                      ClockSource* clkSource,
-                     stdx::condition_variable& cv,
-                     stdx::unique_lock<stdx::mutex>& lk,
+                     ConditionVariable& cv,
+                     stdx::unique_lock<Mutex>& lk,
                      Predicate pred) {
         while (!pred()) {
             wait(waitable, clkSource, cv, lk);
@@ -78,8 +78,8 @@ public:
     static stdx::cv_status wait_until(
         Waitable* waitable,
         ClockSource* clkSource,
-        stdx::condition_variable& cv,
-        stdx::unique_lock<stdx::mutex>& lk,
+        ConditionVariable& cv,
+        stdx::unique_lock<Mutex>& lk,
         const stdx::chrono::time_point<stdx::chrono::system_clock>& timeout_time) {
         if (waitable) {
             auto rval = stdx::cv_status::no_timeout;
@@ -101,8 +101,8 @@ public:
     template <typename Predicate>
     static bool wait_until(Waitable* waitable,
                            ClockSource* clkSource,
-                           stdx::condition_variable& cv,
-                           stdx::unique_lock<stdx::mutex>& lk,
+                           ConditionVariable& cv,
+                           stdx::unique_lock<Mutex>& lk,
                            const stdx::chrono::time_point<stdx::chrono::system_clock>& timeout_time,
                            Predicate pred) {
         while (!pred()) {

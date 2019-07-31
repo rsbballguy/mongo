@@ -29,8 +29,8 @@
 
 #pragma once
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/time_support.h"
 #include "mongo/util/waitable.h"
 
@@ -201,8 +201,8 @@ public:
      * deadline on this operation to expire.  In the event of interruption or operation deadline
      * expiration, raises a AssertionException with an error code indicating the interruption type.
      */
-    void waitForConditionOrInterrupt(stdx::condition_variable& cv,
-                                     stdx::unique_lock<stdx::mutex>& m) {
+    void waitForConditionOrInterrupt(ConditionVariable& cv,
+                                     stdx::unique_lock<Mutex>& m) {
         uassertStatusOK(waitForConditionOrInterruptNoAssert(cv, m));
     }
 
@@ -212,8 +212,8 @@ public:
      * deadline expiration.
      */
     template <typename Pred>
-    void waitForConditionOrInterrupt(stdx::condition_variable& cv,
-                                     stdx::unique_lock<stdx::mutex>& m,
+    void waitForConditionOrInterrupt(ConditionVariable& cv,
+                                     stdx::unique_lock<Mutex>& m,
                                      Pred pred) {
         while (!pred()) {
             waitForConditionOrInterrupt(cv, m);
@@ -224,8 +224,8 @@ public:
      * Same as waitForConditionOrInterrupt, except returns a Status instead of throwing
      * a DBException to report interruption.
      */
-    Status waitForConditionOrInterruptNoAssert(stdx::condition_variable& cv,
-                                               stdx::unique_lock<stdx::mutex>& m) noexcept {
+    Status waitForConditionOrInterruptNoAssert(ConditionVariable& cv,
+                                               stdx::unique_lock<Mutex>& m) noexcept {
         auto status = waitForConditionOrInterruptNoAssertUntil(cv, m, Date_t::max());
         if (!status.isOK()) {
             return status.getStatus();
@@ -240,8 +240,8 @@ public:
      * status instead of throwing on interruption.
      */
     template <typename Pred>
-    Status waitForConditionOrInterruptNoAssert(stdx::condition_variable& cv,
-                                               stdx::unique_lock<stdx::mutex>& m,
+    Status waitForConditionOrInterruptNoAssert(ConditionVariable& cv,
+                                               stdx::unique_lock<Mutex>& m,
                                                Pred pred) noexcept {
         while (!pred()) {
             auto status = waitForConditionOrInterruptNoAssert(cv, m);
@@ -262,8 +262,8 @@ public:
      * the given "deadline" expires, returns cv_status::timeout. Otherwise, returns
      * cv_status::no_timeout.
      */
-    stdx::cv_status waitForConditionOrInterruptUntil(stdx::condition_variable& cv,
-                                                     stdx::unique_lock<stdx::mutex>& m,
+    stdx::cv_status waitForConditionOrInterruptUntil(ConditionVariable& cv,
+                                                     stdx::unique_lock<Mutex>& m,
                                                      Date_t deadline) {
         return uassertStatusOK(waitForConditionOrInterruptNoAssertUntil(cv, m, deadline));
     }
@@ -278,8 +278,8 @@ public:
      * cv_status::no_timeout indicating that "pred" finally returned true.
      */
     template <typename Pred>
-    bool waitForConditionOrInterruptUntil(stdx::condition_variable& cv,
-                                          stdx::unique_lock<stdx::mutex>& m,
+    bool waitForConditionOrInterruptUntil(ConditionVariable& cv,
+                                          stdx::unique_lock<Mutex>& m,
                                           Date_t deadline,
                                           Pred pred) {
         while (!pred()) {
@@ -294,8 +294,8 @@ public:
      * Same as the non-predicate form of waitForConditionOrInterruptUntil, but takes a relative
      * amount of time to wait instead of an absolute time point.
      */
-    stdx::cv_status waitForConditionOrInterruptFor(stdx::condition_variable& cv,
-                                                   stdx::unique_lock<stdx::mutex>& m,
+    stdx::cv_status waitForConditionOrInterruptFor(ConditionVariable& cv,
+                                                   stdx::unique_lock<Mutex>& m,
                                                    Milliseconds ms) {
         return uassertStatusOK(
             waitForConditionOrInterruptNoAssertUntil(cv, m, getExpirationDateForWaitForValue(ms)));
@@ -306,8 +306,8 @@ public:
      * amount of time to wait instead of an absolute time point.
      */
     template <typename Pred>
-    bool waitForConditionOrInterruptFor(stdx::condition_variable& cv,
-                                        stdx::unique_lock<stdx::mutex>& m,
+    bool waitForConditionOrInterruptFor(ConditionVariable& cv,
+                                        stdx::unique_lock<Mutex>& m,
                                         Milliseconds ms,
                                         Pred pred) {
         const auto deadline = getExpirationDateForWaitForValue(ms);
@@ -324,17 +324,17 @@ public:
      * non-ok status indicates the error instead of a DBException.
      */
     virtual StatusWith<stdx::cv_status> waitForConditionOrInterruptNoAssertUntil(
-        stdx::condition_variable& cv,
-        stdx::unique_lock<stdx::mutex>& m,
+        ConditionVariable& cv,
+        stdx::unique_lock<Mutex>& m,
         Date_t deadline) noexcept = 0;
 
     /**
      * Sleeps until "deadline"; throws an exception if the interruptible is interrupted before then.
      */
     void sleepUntil(Date_t deadline) {
-        stdx::mutex m;
-        stdx::condition_variable cv;
-        stdx::unique_lock<stdx::mutex> lk(m);
+        Mutex m;
+        ConditionVariable cv;
+        stdx::unique_lock<Mutex> lk(m);
         invariant(!waitForConditionOrInterruptUntil(cv, lk, deadline, [] { return false; }));
     }
 
@@ -343,9 +343,9 @@ public:
      * then.
      */
     void sleepFor(Milliseconds duration) {
-        stdx::mutex m;
-        stdx::condition_variable cv;
-        stdx::unique_lock<stdx::mutex> lk(m);
+        Mutex m;
+        ConditionVariable cv;
+        stdx::unique_lock<Mutex> lk(m);
         invariant(!waitForConditionOrInterruptFor(cv, lk, duration, [] { return false; }));
     }
 
@@ -399,8 +399,8 @@ protected:
  */
 class Interruptible::NotInterruptible final : public Interruptible {
     StatusWith<stdx::cv_status> waitForConditionOrInterruptNoAssertUntil(
-        stdx::condition_variable& cv,
-        stdx::unique_lock<stdx::mutex>& m,
+        ConditionVariable& cv,
+        stdx::unique_lock<Mutex>& m,
         Date_t deadline) noexcept override {
 
         if (deadline == Date_t::max()) {

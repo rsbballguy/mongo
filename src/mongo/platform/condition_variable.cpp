@@ -28,6 +28,7 @@
  */
 
 #include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 void ConditionVariable::wait(lock_t& lock) {
