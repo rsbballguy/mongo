@@ -251,7 +251,7 @@ public:
 
     bool isDropped = false;
 
-    Mutex mutex;  // You must hold this to access any member below.
+    mutable Mutex mutex;  // You must hold this to access any member below.
 
     executor::TaskExecutor::CallbackHandle refresherHandle;
 
