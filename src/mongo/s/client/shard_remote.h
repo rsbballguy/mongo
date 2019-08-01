@@ -34,7 +34,7 @@
 #include "mongo/s/client/shard.h"
 
 #include "mongo/executor/task_executor.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -133,7 +133,7 @@ private:
     /**
      * Protects _lastCommittedOpTime.
      */
-    mutable stdx::mutex _lastCommittedOpTimeMutex;
+    mutable Mutex _lastCommittedOpTimeMutex;
 
     /**
      * Logical time representing the latest opTime timestamp known to be in this shard's majority

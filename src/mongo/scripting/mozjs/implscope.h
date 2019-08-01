@@ -414,8 +414,8 @@ private:
     std::vector<JS::PersistentRootedValue> _funcs;
     InternedStringTable _internedStrings;
     Status _killStatus;
-    mutable std::mutex _mutex;
-    stdx::condition_variable _sleepCondition;
+    mutable Mutex _mutex;
+    ConditionVariable _sleepCondition;
     std::string _error;
     unsigned int _opId;        // op id for this scope
     OperationContext* _opCtx;  // Op context for DbEval

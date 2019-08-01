@@ -57,8 +57,8 @@ MONGO_FAIL_POINT_DEFINE(initialSyncHangBeforeListCollections);
 
 namespace {
 
-using LockGuard = stdx::lock_guard<stdx::mutex>;
-using UniqueLock = stdx::unique_lock<stdx::mutex>;
+using LockGuard = stdx::lock_guard<Mutex>;
+using UniqueLock = stdx::unique_lock<Mutex>;
 using executor::RemoteCommandRequest;
 
 const char* kNameFieldName = "name";
@@ -206,7 +206,7 @@ Status DatabaseCloner::startup() noexcept {
 }
 
 void DatabaseCloner::shutdown() {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     switch (_state) {
         case State::kPreStart:
             // Transition directly from PreStart to Complete if not started yet.
@@ -254,7 +254,7 @@ void DatabaseCloner::setStartCollectionClonerFn(
 }
 
 DatabaseCloner::State DatabaseCloner::getState_forTest() const {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _state;
 }
 

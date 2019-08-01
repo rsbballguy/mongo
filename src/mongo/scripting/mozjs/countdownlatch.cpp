@@ -33,8 +33,8 @@
 
 #include "mongo/scripting/mozjs/implscope.h"
 #include "mongo/scripting/mozjs/objectwrapper.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_map.h"
 
 namespace mongo {
@@ -61,7 +61,7 @@ public:
 
     int32_t make(int32_t count) {
         uassert(ErrorCodes::JSInterpreterFailure, "argument must be >= 0", count >= 0);
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         int32_t desc = ++_counter;
         _latches.insert(std::make_pair(desc, std::make_shared<Latch>(count)));
@@ -71,7 +71,7 @@ public:
 
     void await(int32_t desc) {
         std::shared_ptr<Latch> latch = get(desc);
-        stdx::unique_lock<stdx::mutex> lock(latch->mutex);
+        stdx::unique_lock<Mutex> lock(latch->mutex);
 
         while (latch->count != 0) {
             latch->cv.wait(lock);
@@ -80,7 +80,7 @@ public:
 
     void countDown(int32_t desc) {
         std::shared_ptr<Latch> latch = get(desc);
-        stdx::unique_lock<stdx::mutex> lock(latch->mutex);
+        stdx::unique_lock<Mutex> lock(latch->mutex);
 
         if (latch->count > 0)
             latch->count--;
@@ -91,7 +91,7 @@ public:
 
     int32_t getCount(int32_t desc) {
         std::shared_ptr<Latch> latch = get(desc);
-        stdx::unique_lock<stdx::mutex> lock(latch->mutex);
+        stdx::unique_lock<Mutex> lock(latch->mutex);
 
         return latch->count;
     }
@@ -103,13 +103,13 @@ private:
     struct Latch {
         Latch(int32_t count) : count(count) {}
 
-        stdx::mutex mutex;
-        stdx::condition_variable cv;
+        Mutex mutex;
+        ConditionVariable cv;
         int32_t count;
     };
 
     std::shared_ptr<Latch> get(int32_t desc) {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         auto iter = _latches.find(desc);
         uassert(ErrorCodes::JSInterpreterFailure,
@@ -121,7 +121,7 @@ private:
 
     using Map = stdx::unordered_map<int32_t, std::shared_ptr<Latch>>;
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
     Map _latches;
     int32_t _counter;
 };

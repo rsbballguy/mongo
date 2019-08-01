@@ -33,8 +33,8 @@
 
 #include "mongo/client/dbclient_cursor.h"
 #include "mongo/scripting/mozjs/engine.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/functional.h"
 
@@ -195,14 +195,14 @@ private:
      * This mutex protects _function, _state and _status as channels for
      * function invocation and exception handling
      */
-    stdx::mutex _mutex;
+    Mutex _mutex;
     unique_function<void()> _function;
     State _state;
     Status _status;
     OperationContext* _opCtx = nullptr;
 
-    stdx::condition_variable _proxyCondvar;
-    stdx::condition_variable _implCondvar;
+    ConditionVariable _proxyCondvar;
+    ConditionVariable _implCondvar;
     PRThread* _thread;
 };
 

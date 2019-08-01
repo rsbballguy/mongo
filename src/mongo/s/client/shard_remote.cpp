@@ -136,7 +136,7 @@ void ShardRemote::updateReplSetMonitor(const HostAndPort& remoteHost,
 }
 
 void ShardRemote::updateLastCommittedOpTime(LogicalTime lastCommittedOpTime) {
-    stdx::lock_guard<stdx::mutex> lk(_lastCommittedOpTimeMutex);
+    stdx::lock_guard<Mutex> lk(_lastCommittedOpTimeMutex);
 
     // A secondary may return a lastCommittedOpTime less than the latest seen so far.
     if (lastCommittedOpTime > _lastCommittedOpTime) {
@@ -145,7 +145,7 @@ void ShardRemote::updateLastCommittedOpTime(LogicalTime lastCommittedOpTime) {
 }
 
 LogicalTime ShardRemote::getLastCommittedOpTime() const {
-    stdx::lock_guard<stdx::mutex> lk(_lastCommittedOpTimeMutex);
+    stdx::lock_guard<Mutex> lk(_lastCommittedOpTimeMutex);
     return _lastCommittedOpTime;
 }
 

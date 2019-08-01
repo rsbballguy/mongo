@@ -32,7 +32,7 @@
 #include "mongo/db/repl/replication_metrics_gen.h"
 #include "mongo/db/repl/topology_coordinator.h"
 #include "mongo/db/service_context.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 namespace repl {
@@ -95,7 +95,7 @@ public:
 private:
     class ElectionMetricsSSS;
 
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
     ElectionMetrics _electionMetrics;
     ElectionCandidateMetrics _electionCandidateMetrics;
     ElectionParticipantMetrics _electionParticipantMetrics;

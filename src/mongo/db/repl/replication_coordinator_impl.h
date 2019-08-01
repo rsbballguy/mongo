@@ -49,8 +49,8 @@
 #include "mongo/executor/task_executor.h"
 #include "mongo/platform/atomic_word.h"
 #include "mongo/platform/random.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_set.h"
 #include "mongo/util/concurrency/with_lock.h"
 #include "mongo/util/net/hostandport.h"
@@ -567,9 +567,9 @@ private:
         // Tracks number of operations left running on step down.
         size_t _userOpsRunning = 0;
         // Protects killSignaled and stopKillingOps cond. variable.
-        stdx::mutex _mutex;
+        Mutex _mutex;
         // Signals thread about the change of killSignaled value.
-        stdx::condition_variable _stopKillingOps;
+        ConditionVariable _stopKillingOps;
         // Once this is set to true, the killOpThreadFn method will terminate.
         bool _killSignaled = false;
     };
@@ -599,13 +599,13 @@ private:
     struct ThreadWaiter : public Waiter {
         ThreadWaiter(OpTime _opTime,
                      const WriteConcernOptions* _writeConcern,
-                     stdx::condition_variable* _condVar);
+                     ConditionVariable* _condVar);
         void notify_inlock() override;
         bool runs_once() const override {
             return false;
         }
 
-        stdx::condition_variable* condVar = nullptr;
+        ConditionVariable* condVar = nullptr;
     };
 
     // When the waiter is notified, finishCallback will be called while holding replCoord _mutex
@@ -791,7 +791,7 @@ private:
      * Helper method for _awaitReplication that takes an already locked unique_lock, but leaves
      * operation timing to the caller.
      */
-    Status _awaitReplication_inlock(stdx::unique_lock<stdx::mutex>* lock,
+    Status _awaitReplication_inlock(stdx::unique_lock<Mutex>* lock,
                                     OperationContext* opCtx,
                                     const OpTime& opTime,
                                     const WriteConcernOptions& writeConcern);
@@ -843,7 +843,7 @@ private:
      *
      * Lock will be released after this method finishes.
      */
-    void _reportUpstream_inlock(stdx::unique_lock<stdx::mutex> lock);
+    void _reportUpstream_inlock(stdx::unique_lock<Mutex> lock);
 
     /**
      * Helpers to set the last applied and durable OpTime.
@@ -1130,10 +1130,10 @@ private:
      *
      * Requires "lock" to own _mutex, and returns the same unique_lock.
      */
-    stdx::unique_lock<stdx::mutex> _handleHeartbeatResponseAction_inlock(
+    stdx::unique_lock<Mutex> _handleHeartbeatResponseAction_inlock(
         const HeartbeatResponseAction& action,
         const StatusWith<ReplSetHeartbeatResponse>& responseStatus,
-        stdx::unique_lock<stdx::mutex> lock);
+        stdx::unique_lock<Mutex> lock);
 
     /**
      * Updates the last committed OpTime to be 'committedOpTime' if it is more recent than the
@@ -1355,7 +1355,7 @@ private:
     // (I)  Independently synchronized, see member variable comment.
 
     // Protects member data of this ReplicationCoordinator.
-    mutable stdx::mutex _mutex;  // (S)
+    mutable Mutex _mutex;  // (S)
 
     // Handles to actively queued heartbeats.
     HeartbeatHandles _heartbeatHandles;  // (M)
@@ -1398,18 +1398,18 @@ private:
     OID _electionId;  // (M)
 
     // Used to signal threads waiting for changes to _memberState.
-    stdx::condition_variable _memberStateChange;  // (M)
+    ConditionVariable _memberStateChange;  // (M)
 
     // Current ReplicaSet state.
     MemberState _memberState;  // (M)
 
     // Used to signal threads waiting for changes to _memberState.
-    stdx::condition_variable _drainFinishedCond;  // (M)
+    ConditionVariable _drainFinishedCond;  // (M)
 
     ReplicationCoordinator::ApplierState _applierState = ApplierState::Running;  // (M)
 
     // Used to signal threads waiting for changes to _rsConfigState.
-    stdx::condition_variable _rsConfigStateChange;  // (M)
+    ConditionVariable _rsConfigStateChange;  // (M)
 
     // Represents the configuration state of the coordinator, which controls how and when
     // _rsConfig may change.  See the state transition diagram in the type definition of
@@ -1471,7 +1471,7 @@ private:
     std::set<OpTimeAndWallTime> _stableOpTimeCandidates;  // (M)
 
     // Used to signal threads that are waiting for new committed snapshots.
-    stdx::condition_variable _currentCommittedSnapshotCond;  // (M)
+    ConditionVariable _currentCommittedSnapshotCond;  // (M)
 
     // Callback Handle used to cancel a scheduled LivenessTimeout callback.
     executor::TaskExecutor::CallbackHandle _handleLivenessTimeoutCbh;  // (M)

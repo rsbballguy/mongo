@@ -156,9 +156,9 @@ private:
     void _run();
 
     // Protects _cond, _shutdownSignaled, and _latestOpTime.
-    stdx::mutex _mutex;
+    Mutex _mutex;
     // Used to alert our thread of a new OpTime.
-    stdx::condition_variable _cond;
+    ConditionVariable _cond;
     // The next OpTime to set as the ReplicationCoordinator's lastOpTime after flushing.
     OpTimeAndWallTime _latestOpTimeAndWallTime;
     // Once this is set to true the _run method will terminate.
@@ -168,7 +168,7 @@ private:
 };
 
 ApplyBatchFinalizerForJournal::~ApplyBatchFinalizerForJournal() {
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
     _shutdownSignaled = true;
     _cond.notify_all();
     lock.unlock();
@@ -180,7 +180,7 @@ void ApplyBatchFinalizerForJournal::record(const OpTimeAndWallTime& newOpTimeAnd
                                            ReplicationCoordinator::DataConsistency consistency) {
     _recordApplied(newOpTimeAndWallTime, consistency);
 
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
     _latestOpTimeAndWallTime = newOpTimeAndWallTime;
     _cond.notify_all();
 }
@@ -192,7 +192,7 @@ void ApplyBatchFinalizerForJournal::_run() {
         OpTimeAndWallTime latestOpTimeAndWallTime = {OpTime(), Date_t()};
 
         {
-            stdx::unique_lock<stdx::mutex> lock(_mutex);
+            stdx::unique_lock<Mutex> lock(_mutex);
             while (_latestOpTimeAndWallTime.opTime.isNull() && !_shutdownSignaled) {
                 _cond.wait(lock);
             }
@@ -584,7 +584,7 @@ public:
     }
 
     OpQueue getNextBatch(Seconds maxWaitTime) {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         if (_ops.empty() && !_ops.mustShutdown()) {
             // We intentionally don't care about whether this returns due to signaling or timeout
             // since we do the same thing either way: return whatever is in _ops.
@@ -663,7 +663,7 @@ private:
                 continue;  // Don't emit empty batches.
             }
 
-            stdx::unique_lock<stdx::mutex> lk(_mutex);
+            stdx::unique_lock<Mutex> lk(_mutex);
             // Block until the previous batch has been taken.
             _cv.wait(lk, [&] { return _ops.empty(); });
             _ops = std::move(ops);
@@ -680,8 +680,8 @@ private:
     OplogBuffer* const _oplogBuffer;
     OplogApplier::GetNextApplierBatchFn const _getNextApplierBatchFn;
 
-    stdx::mutex _mutex;  // Guards _ops.
-    stdx::condition_variable _cv;
+    Mutex _mutex;  // Guards _ops.
+    ConditionVariable _cv;
     OpQueue _ops;
 
     // This only exists so the destructor invariants rather than deadlocking.
@@ -828,12 +828,12 @@ void SyncTail::_oplogApplication(ReplicationCoordinator* replCoord,
 }
 
 void SyncTail::shutdown() {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     _inShutdown = true;
 }
 
 bool SyncTail::inShutdown() const {
-    stdx::lock_guard<stdx::mutex> lock(_mutex);
+    stdx::lock_guard<Mutex> lock(_mutex);
     return _inShutdown;
 }
 

@@ -37,7 +37,7 @@
 #include "mongo/db/repl/replication_metrics.h"
 #include "mongo/db/repl/topology_coordinator.h"
 #include "mongo/db/repl/vote_requester.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/log.h"
 #include "mongo/util/scopeguard.h"
 
@@ -94,7 +94,7 @@ public:
 
 void ReplicationCoordinatorImpl::_startElectSelfV1(
     TopologyCoordinator::StartElectionReason reason) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _startElectSelfV1_inlock(reason);
 }
 
@@ -186,7 +186,7 @@ void ReplicationCoordinatorImpl::_startElectSelfV1_inlock(
 
 void ReplicationCoordinatorImpl::_processDryRunResult(
     long long originalTerm, TopologyCoordinator::StartElectionReason reason) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     LoseElectionDryRunGuardV1 lossGuard(this);
 
     invariant(_voteRequester);
@@ -268,7 +268,7 @@ void ReplicationCoordinatorImpl::_writeLastVoteForMyElection(
         return _externalState->storeLocalLastVoteDocument(opCtx.get(), lastVote);
     }();
 
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     LoseElectionDryRunGuardV1 lossGuard(this);
     if (status == ErrorCodes::CallbackCanceled) {
         return;
@@ -314,7 +314,7 @@ MONGO_FAIL_POINT_DEFINE(electionHangsBeforeUpdateMemberState);
 
 void ReplicationCoordinatorImpl::_onVoteRequestComplete(
     long long newTerm, TopologyCoordinator::StartElectionReason reason) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     LoseElectionGuardV1 lossGuard(this);
 
     invariant(_voteRequester);
