@@ -287,7 +287,7 @@ Status MigrationChunkClonerSourceLegacy::startClone(OperationContext* opCtx) {
     // between cancellations for different migration sessions. It is thus possible that a second
     // migration from different donor, but the same recipient would certainly abort an already
     // running migration.
-    stdx::lock_guard<stdx::mutex> sl(_mutex);
+    stdx::lock_guard<Mutex> sl(_mutex);
     _state = kCloning;
 
     return Status::OK();
@@ -316,7 +316,7 @@ Status MigrationChunkClonerSourceLegacy::awaitUntilCriticalSectionIsAppropriate(
         }
         iteration++;
 
-        stdx::lock_guard<stdx::mutex> sl(_mutex);
+        stdx::lock_guard<Mutex> sl(_mutex);
 
         const std::size_t cloneLocsRemaining = _cloneLocs.size();
 
@@ -546,14 +546,14 @@ void MigrationChunkClonerSourceLegacy::_addToTransferModsQueue(
     const repl::OpTime& prePostImageOpTime) {
     switch (op) {
         case 'd': {
-            stdx::lock_guard<stdx::mutex> sl(_mutex);
+            stdx::lock_guard<Mutex> sl(_mutex);
             _deleted.push_back(idObj);
             _memoryUsed += idObj.firstElement().size() + 5;
         } break;
 
         case 'i':
         case 'u': {
-            stdx::lock_guard<stdx::mutex> sl(_mutex);
+            stdx::lock_guard<Mutex> sl(_mutex);
             _reload.push_back(idObj);
             _memoryUsed += idObj.firstElement().size() + 5;
         } break;
@@ -569,7 +569,7 @@ void MigrationChunkClonerSourceLegacy::_addToTransferModsQueue(
 }
 
 bool MigrationChunkClonerSourceLegacy::_addedOperationToOutstandingOperationTrackRequests() {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     if (!_acceptingNewOperationTrackRequests) {
         return false;
     }
@@ -579,7 +579,7 @@ bool MigrationChunkClonerSourceLegacy::_addedOperationToOutstandingOperationTrac
 }
 
 void MigrationChunkClonerSourceLegacy::_drainAllOutstandingOperationTrackRequests(
-    stdx::unique_lock<stdx::mutex>& lk) {
+    stdx::unique_lock<Mutex>& lk) {
     invariant(_state == kDone);
     _acceptingNewOperationTrackRequests = false;
     _allOutstandingOperationTrackRequestsDrained.wait(
@@ -593,7 +593,7 @@ void MigrationChunkClonerSourceLegacy::_incrementOutstandingOperationTrackReques
 }
 
 void MigrationChunkClonerSourceLegacy::_decrementOutstandingOperationTrackRequests() {
-    stdx::lock_guard<stdx::mutex> sl(_mutex);
+    stdx::lock_guard<Mutex> sl(_mutex);
     --_outstandingOperationTrackRequests;
     if (_outstandingOperationTrackRequests == 0) {
         _allOutstandingOperationTrackRequestsDrained.notify_all();
@@ -601,7 +601,7 @@ void MigrationChunkClonerSourceLegacy::_decrementOutstandingOperationTrackReques
 }
 
 uint64_t MigrationChunkClonerSourceLegacy::getCloneBatchBufferAllocationSize() {
-    stdx::lock_guard<stdx::mutex> sl(_mutex);
+    stdx::lock_guard<Mutex> sl(_mutex);
 
     return std::min(static_cast<uint64_t>(BSONObjMaxUserSize),
                     _averageObjectSizeForCloneLocs * _cloneLocs.size());
@@ -616,7 +616,7 @@ Status MigrationChunkClonerSourceLegacy::nextCloneBatch(OperationContext* opCtx,
                            internalQueryExecYieldIterations.load(),
                            Milliseconds(internalQueryExecYieldPeriodMS.load()));
 
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     auto iter = _cloneLocs.begin();
 
     for (; iter != _cloneLocs.end(); ++iter) {
@@ -661,7 +661,7 @@ Status MigrationChunkClonerSourceLegacy::nextModsBatch(OperationContext* opCtx,
 
     {
         // All clone data must have been drained before starting to fetch the incremental changes.
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         invariant(_cloneLocs.empty());
 
         // The "snapshot" for delete and update list must be taken under a single lock. This is to
@@ -680,7 +680,7 @@ Status MigrationChunkClonerSourceLegacy::nextModsBatch(OperationContext* opCtx,
     builder->append("size", totalDocSize);
 
     // Put back remaining ids we didn't consume
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _deleted.splice(_deleted.cbegin(), deleteList);
     _reload.splice(_reload.cbegin(), updateList);
 
@@ -688,7 +688,7 @@ Status MigrationChunkClonerSourceLegacy::nextModsBatch(OperationContext* opCtx,
 }
 
 void MigrationChunkClonerSourceLegacy::_cleanup(OperationContext* opCtx) {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _state = kDone;
 
     _drainAllOutstandingOperationTrackRequests(lk);
@@ -795,7 +795,7 @@ Status MigrationChunkClonerSourceLegacy::_storeCurrentLocs(OperationContext* opC
         }
 
         if (!isLargeChunk) {
-            stdx::lock_guard<stdx::mutex> lk(_mutex);
+            stdx::lock_guard<Mutex> lk(_mutex);
             _cloneLocs.insert(recordId);
         }
 
@@ -824,7 +824,7 @@ Status MigrationChunkClonerSourceLegacy::_storeCurrentLocs(OperationContext* opC
                           << _args.getMaxKey()};
     }
 
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _averageObjectSizeForCloneLocs = collectionAverageObjectSize + 12;
 
     return Status::OK();

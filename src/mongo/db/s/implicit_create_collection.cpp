@@ -46,8 +46,8 @@
 #include "mongo/s/grid.h"
 #include "mongo/s/request_types/create_collection_gen.h"
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/scopeguard.h"
 
 namespace mongo {
@@ -73,7 +73,7 @@ public:
         invariant(!opCtx->lockState()->isLocked());
 
         {
-            stdx::unique_lock<stdx::mutex> lg(_mutex);
+            stdx::unique_lock<Mutex> lg(_mutex);
             while (_isInProgress) {
                 auto status = opCtx->waitForConditionOrInterruptNoAssert(_cvIsInProgress, lg);
                 if (!status.isOK()) {
@@ -85,7 +85,7 @@ public:
         }
 
         ON_BLOCK_EXIT([&] {
-            stdx::lock_guard<stdx::mutex> lg(_mutex);
+            stdx::lock_guard<Mutex> lg(_mutex);
             _isInProgress = false;
             _cvIsInProgress.notify_one();
         });
@@ -128,15 +128,15 @@ public:
 private:
     const NamespaceString _ns;
 
-    stdx::mutex _mutex;
-    stdx::condition_variable _cvIsInProgress;
+    Mutex _mutex;
+    ConditionVariable _cvIsInProgress;
     bool _isInProgress = false;
 };
 
 class CreateCollectionSerializerMap {
 public:
     std::shared_ptr<CreateCollectionSerializer> getForNs(const NamespaceString& ns) {
-        stdx::lock_guard<stdx::mutex> lg(_mutex);
+        stdx::lock_guard<Mutex> lg(_mutex);
         auto iter = _inProgressMap.find(ns.ns());
         if (iter == _inProgressMap.end()) {
             std::tie(iter, std::ignore) =
@@ -147,12 +147,12 @@ public:
     }
 
     void cleanupNs(const NamespaceString& ns) {
-        stdx::lock_guard<stdx::mutex> lg(_mutex);
+        stdx::lock_guard<Mutex> lg(_mutex);
         _inProgressMap.erase(ns.ns());
     }
 
 private:
-    stdx::mutex _mutex;
+    Mutex _mutex;
     std::map<std::string, std::shared_ptr<CreateCollectionSerializer>> _inProgressMap;
 };
 

@@ -138,7 +138,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
             //         _participantsDurable (optional)
             //  Output: _participantsDurable = true
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 invariant(_participants);
 
                 _step = Step::kWritingParticipantList;
@@ -166,7 +166,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
         .thenRunOn(Grid::get(_serviceContext)->getExecutorPool()->getFixedExecutor())
         .then([this] {
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 _participantsDurable = true;
             }
 
@@ -177,7 +177,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
             //         _decision (optional)
             //  Output: _decision is set
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 invariant(_participantsDurable);
 
                 _step = Step::kWaitingForVotes;
@@ -196,7 +196,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
                        _serviceContext, *_sendPrepareScheduler, _lsid, _txnNumber, *_participants)
                 .then([this](PrepareVoteConsensus consensus) mutable {
                     {
-                        stdx::lock_guard<stdx::mutex> lg(_mutex);
+                        stdx::lock_guard<Mutex> lg(_mutex);
                         _decision = consensus.decision();
                     }
 
@@ -219,7 +219,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
             //         _decisionDurable (optional)
             //  Output: _decisionDurable = true
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 invariant(_decision);
 
                 _step = Step::kWritingDecision;
@@ -244,7 +244,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
         })
         .then([this] {
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 _decisionDurable = true;
             }
 
@@ -252,7 +252,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
             //  Input: _decisionDurable
             //  Output: (none)
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
                 invariant(_decisionDurable);
 
                 _step = Step::kWaitingForDecisionAcks;
@@ -294,7 +294,7 @@ TransactionCoordinator::TransactionCoordinator(ServiceContext* serviceContext,
             // Do a best-effort attempt (i.e., writeConcern w:1) to delete the coordinator's durable
             // state.
             {
-                stdx::lock_guard<stdx::mutex> lg(_mutex);
+                stdx::lock_guard<Mutex> lg(_mutex);
 
                 _step = Step::kDeletingCoordinatorDoc;
 
@@ -353,7 +353,7 @@ SharedSemiFuture<CommitDecision> TransactionCoordinator::getDecision() const {
 }
 
 Future<void> TransactionCoordinator::onCompletion() {
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     if (_completionPromisesFired)
         return Future<void>::makeReady();
 
@@ -372,7 +372,7 @@ void TransactionCoordinator::cancelIfCommitNotYetStarted() {
 }
 
 bool TransactionCoordinator::_reserveKickOffCommitPromise() {
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     if (_kickOffCommitPromiseSet)
         return false;
 
@@ -393,7 +393,7 @@ void TransactionCoordinator::_done(Status status) {
     LOG(3) << "Two-phase commit for " << _lsid.getId() << ':' << _txnNumber << " completed with "
            << redact(status);
 
-    stdx::unique_lock<stdx::mutex> ul(_mutex);
+    stdx::unique_lock<Mutex> ul(_mutex);
 
     const auto tickSource = _serviceContext->getTickSource();
 

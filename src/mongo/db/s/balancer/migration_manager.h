@@ -40,8 +40,8 @@
 #include "mongo/executor/task_executor.h"
 #include "mongo/s/catalog/dist_lock_manager.h"
 #include "mongo/s/request_types/migration_secondary_throttle_options.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_map.h"
 #include "mongo/util/concurrency/notification.h"
 #include "mongo/util/concurrency/with_lock.h"
@@ -260,14 +260,14 @@ private:
     stdx::unordered_map<NamespaceString, std::list<MigrationType>> _migrationRecoveryMap;
 
     // Protects the class state below.
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // Always start the migration manager in a stopped state.
     State _state{State::kStopped};
 
     // Condition variable, which is waited on when the migration manager's state is changing and
     // signaled when the state change is complete.
-    stdx::condition_variable _condVar;
+    ConditionVariable _condVar;
 
     // Maps collection namespaces to that collection's active migrations.
     CollectionMigrationsStateMap _activeMigrations;

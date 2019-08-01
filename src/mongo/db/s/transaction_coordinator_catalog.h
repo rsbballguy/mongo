@@ -33,7 +33,7 @@
 #include <map>
 
 #include "mongo/db/s/transaction_coordinator.h"
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/util/concurrency/with_lock.h"
 
 namespace mongo {
@@ -114,7 +114,7 @@ private:
      * Blocks in an interruptible wait until the catalog is not marked as having a stepup in
      * progress.
      */
-    void _waitForStepUpToComplete(stdx::unique_lock<stdx::mutex>& lk, OperationContext* opCtx);
+    void _waitForStepUpToComplete(stdx::unique_lock<Mutex>& lk, OperationContext* opCtx);
 
     /**
      * Removes the coordinator with the given session id and transaction number from the catalog, if
@@ -131,7 +131,7 @@ private:
     std::string _toString(WithLock wl) const;
 
     // Protects the state below.
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
 
     // Contains TransactionCoordinator objects by session id and transaction number. May contain
     // more than one coordinator per session. All coordinators for a session that do not correspond
@@ -151,10 +151,10 @@ private:
 
     // Signaled when recovery of the catalog completes (when _stepUpCompletionStatus transitions
     // from none to either OK or error)
-    stdx::condition_variable _stepUpCompleteCV;
+    ConditionVariable _stepUpCompleteCV;
 
     // Notified when the last coordinator is removed from the catalog.
-    stdx::condition_variable _noActiveCoordinatorsCV;
+    ConditionVariable _noActiveCoordinatorsCV;
 };
 
 }  // namespace mongo

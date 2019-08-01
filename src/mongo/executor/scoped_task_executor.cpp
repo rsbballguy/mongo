@@ -226,7 +226,7 @@ private:
             [id, work = std::forward<Work>(work), self = shared_from_this()](const auto& cargs) {
                 using ArgsT = std::decay_t<decltype(cargs)>;
 
-                stdx::unique_lock<stdx::mutex> lk(self->_mutex);
+                stdx::unique_lock<Mutex> lk(self->_mutex);
 
                 auto doWorkAndNotify = [&](const ArgsT& x) noexcept {
                     lk.unlock();
@@ -301,7 +301,7 @@ private:
         }
     }
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
     bool _inShutdown = false;
     std::shared_ptr<TaskExecutor> _executor;
     size_t _id = 0;
@@ -309,7 +309,7 @@ private:
 
     // condition variable that callers of join wait on and outstanding callbacks potentially
     // notify
-    stdx::condition_variable _cv;
+    ConditionVariable _cv;
 };
 
 ScopedTaskExecutor::ScopedTaskExecutor(std::shared_ptr<TaskExecutor> executor)

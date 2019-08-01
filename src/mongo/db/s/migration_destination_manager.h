@@ -42,8 +42,8 @@
 #include "mongo/db/s/migration_session_id.h"
 #include "mongo/db/s/session_catalog_migration_destination.h"
 #include "mongo/s/shard_id.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/concurrency/with_lock.h"
 #include "mongo/util/timer.h"
@@ -178,7 +178,7 @@ private:
     bool _isActive(WithLock) const;
 
     // Mutex to guard all fields
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
 
     // Migration session ID uniquely identifies the migration and indicates whether the prepare
     // method has been called.
@@ -186,7 +186,7 @@ private:
     boost::optional<ScopedReceiveChunk> _scopedReceiveChunk;
 
     // A condition variable on which to wait for the prepare method to be called.
-    stdx::condition_variable _isActiveCV;
+    ConditionVariable _isActiveCV;
 
     stdx::thread _migrateThreadHandle;
 
@@ -218,7 +218,7 @@ private:
     std::unique_ptr<SessionCatalogMigrationDestination> _sessionMigration;
 
     // Condition variable, which is signalled every time the state of the migration changes.
-    stdx::condition_variable _stateChangedCV;
+    ConditionVariable _stateChangedCV;
 };
 
 }  // namespace mongo

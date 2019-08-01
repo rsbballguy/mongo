@@ -139,7 +139,7 @@ void TransactionCoordinatorService::onStepUp(OperationContext* opCtx,
                                              Milliseconds recoveryDelayForTesting) {
     joinPreviousRound();
 
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     invariant(!_catalogAndScheduler);
     _catalogAndScheduler = std::make_shared<CatalogAndScheduler>(opCtx->getServiceContext());
 
@@ -202,7 +202,7 @@ void TransactionCoordinatorService::onStepUp(OperationContext* opCtx,
 
 void TransactionCoordinatorService::onStepDown() {
     {
-        stdx::lock_guard<stdx::mutex> lg(_mutex);
+        stdx::lock_guard<Mutex> lg(_mutex);
         if (!_catalogAndScheduler)
             return;
 
@@ -217,7 +217,7 @@ void TransactionCoordinatorService::onShardingInitialization(OperationContext* o
     if (!isPrimary)
         return;
 
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
 
     invariant(!_catalogAndScheduler);
     _catalogAndScheduler = std::make_shared<CatalogAndScheduler>(opCtx->getServiceContext());
@@ -228,7 +228,7 @@ void TransactionCoordinatorService::onShardingInitialization(OperationContext* o
 
 std::shared_ptr<TransactionCoordinatorService::CatalogAndScheduler>
 TransactionCoordinatorService::_getCatalogAndScheduler(OperationContext* opCtx) {
-    stdx::unique_lock<stdx::mutex> ul(_mutex);
+    stdx::unique_lock<Mutex> ul(_mutex);
     uassert(
         ErrorCodes::NotMaster, "Transaction coordinator is not a primary", _catalogAndScheduler);
 

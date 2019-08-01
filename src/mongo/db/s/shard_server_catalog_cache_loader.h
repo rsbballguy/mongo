@@ -32,7 +32,7 @@
 #include "mongo/db/operation_context_group.h"
 #include "mongo/db/s/namespace_metadata_change_notifications.h"
 #include "mongo/s/catalog_cache_loader.h"
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/util/concurrency/thread_pool.h"
 
 namespace mongo {
@@ -204,7 +204,7 @@ private:
          * same task object on which it was called because it might have been deleted during the
          * unlocked period.
          */
-        void waitForActiveTaskCompletion(stdx::unique_lock<stdx::mutex>& lg);
+        void waitForActiveTaskCompletion(stdx::unique_lock<Mutex>& lg);
 
         /**
          * Checks whether 'term' matches the term of the latest task in the task list. This is
@@ -229,7 +229,7 @@ private:
 
         // Condition variable which will be signaled whenever the active task from the tasks list is
         // completed. Must be used in conjunction with the loader's mutex.
-        std::shared_ptr<stdx::condition_variable> _activeTaskCompletedCondVar;
+        std::shared_ptr<ConditionVariable> _activeTaskCompletedCondVar;
     };
 
     /**
@@ -314,7 +314,7 @@ private:
          * same task object on which it was called because it might have been deleted during the
          * unlocked period.
          */
-        void waitForActiveTaskCompletion(stdx::unique_lock<stdx::mutex>& lg);
+        void waitForActiveTaskCompletion(stdx::unique_lock<Mutex>& lg);
 
         /**
          * Checks whether 'term' matches the term of the latest task in the task list. This is
@@ -328,7 +328,7 @@ private:
 
         // Condition variable which will be signaled whenever the active task from the tasks list is
         // completed. Must be used in conjunction with the loader's mutex.
-        std::shared_ptr<stdx::condition_variable> _activeTaskCompletedCondVar;
+        std::shared_ptr<ConditionVariable> _activeTaskCompletedCondVar;
     };
     typedef std::map<std::string, DbTaskList> DbTaskLists;
 
@@ -484,7 +484,7 @@ private:
     NamespaceMetadataChangeNotifications _namespaceNotifications;
 
     // Protects the class state below
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // True if shutDown was called.
     bool _inShutdown{false};

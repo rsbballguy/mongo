@@ -41,7 +41,7 @@
 #include "mongo/s/client/shard_registry.h"
 #include "mongo/s/request_types/rename_collection_gen.h"
 #include "mongo/s/shard_key_pattern.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -533,7 +533,7 @@ private:
     // (S) Self-synchronizing; access in any way from any context.
     //
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // True if shutDown() has been called. False, otherwise.
     bool _inShutdown{false};  // (M)

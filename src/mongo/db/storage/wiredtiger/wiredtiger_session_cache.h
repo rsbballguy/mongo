@@ -37,7 +37,7 @@
 #include "mongo/db/storage/journal_listener.h"
 #include "mongo/db/storage/wiredtiger/wiredtiger_snapshot_manager.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/spin_lock.h"
 
 namespace mongo {
@@ -322,7 +322,7 @@ private:
     AtomicWord<unsigned> _shuttingDown;
     static const uint32_t kShuttingDownMask = 1 << 31;
 
-    stdx::mutex _cacheLock;
+    Mutex _cacheLock;
     typedef std::vector<WiredTigerSession*> SessionCache;
     SessionCache _sessions;
 
@@ -334,15 +334,15 @@ private:
 
     // Counter and critical section mutex for waitUntilDurable
     AtomicWord<unsigned> _lastSyncTime;
-    stdx::mutex _lastSyncMutex;
+    Mutex _lastSyncMutex;
 
     // Mutex and cond var for waiting on prepare commit or abort.
-    stdx::mutex _prepareCommittedOrAbortedMutex;
-    stdx::condition_variable _prepareCommittedOrAbortedCond;
+    Mutex _prepareCommittedOrAbortedMutex;
+    ConditionVariable _prepareCommittedOrAbortedCond;
     AtomicWord<std::uint64_t> _prepareCommitOrAbortCounter{0};
 
     // Protects _journalListener.
-    stdx::mutex _journalListenerMutex;
+    Mutex _journalListenerMutex;
     // Notified when we commit to the journal.
     JournalListener* _journalListener = &NoOpJournalListener::instance;
 

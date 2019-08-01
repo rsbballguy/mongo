@@ -44,7 +44,7 @@
 #include "mongo/db/storage/wiredtiger/wiredtiger_oplog_manager.h"
 #include "mongo/db/storage/wiredtiger/wiredtiger_session_cache.h"
 #include "mongo/db/storage/wiredtiger/wiredtiger_util.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/elapsed_tracker.h"
 
 namespace mongo {
@@ -400,7 +400,7 @@ private:
 
     std::uint64_t _getCheckpointTimestamp() const;
 
-    mutable stdx::mutex _oldestActiveTransactionTimestampCallbackMutex;
+    mutable Mutex _oldestActiveTransactionTimestampCallbackMutex;
     StorageEngine::OldestActiveTransactionTimestampCallback
         _oldestActiveTransactionTimestampCallback;
 
@@ -411,7 +411,7 @@ private:
     ClockSource* const _clockSource;
 
     // Mutex to protect use of _oplogManagerCount by this instance of KV engine.
-    mutable stdx::mutex _oplogManagerMutex;
+    mutable Mutex _oplogManagerMutex;
     std::size_t _oplogManagerCount = 0;
     std::unique_ptr<WiredTigerOplogManager> _oplogManager;
 
@@ -442,15 +442,15 @@ private:
     std::string _rsOptions;
     std::string _indexOptions;
 
-    mutable stdx::mutex _dropAllQueuesMutex;
-    mutable stdx::mutex _identToDropMutex;
+    mutable Mutex _dropAllQueuesMutex;
+    mutable Mutex _identToDropMutex;
     std::list<std::string> _identToDrop;
 
     mutable Date_t _previousCheckedDropsQueued;
 
     std::unique_ptr<WiredTigerSession> _backupSession;
     WT_CURSOR* _backupCursor;
-    mutable stdx::mutex _oplogPinnedByBackupMutex;
+    mutable Mutex _oplogPinnedByBackupMutex;
     boost::optional<Timestamp> _oplogPinnedByBackup;
     Timestamp _recoveryTimestamp;
 

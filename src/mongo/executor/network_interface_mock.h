@@ -37,8 +37,8 @@
 
 #include "mongo/executor/network_interface.h"
 #include "mongo/rpc/metadata/metadata_hook.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/unordered_map.h"
 #include "mongo/stdx/unordered_set.h"
 #include "mongo/util/clock_source.h"
@@ -324,7 +324,7 @@ private:
     /**
      * Implementation of waitForWork*.
      */
-    void _waitForWork_inlock(stdx::unique_lock<stdx::mutex>* lk);
+    void _waitForWork_inlock(stdx::unique_lock<Mutex>* lk);
 
     /**
      * Returns true if there are ready requests for the network thread to service.
@@ -356,18 +356,18 @@ private:
      * reaquire "lk" several times, but will not return until the executor has blocked
      * in waitFor*.
      */
-    void _runReadyNetworkOperations_inlock(stdx::unique_lock<stdx::mutex>* lk);
+    void _runReadyNetworkOperations_inlock(stdx::unique_lock<Mutex>* lk);
 
     // Mutex that synchronizes access to mutable data in this class and its subclasses.
     // Fields guarded by the mutex are labled (M), below, and those that are read-only
     // in multi-threaded execution, and so unsynchronized, are labeled (R).
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // Condition signaled to indicate that the network processing thread should wake up.
-    stdx::condition_variable _shouldWakeNetworkCondition;  // (M)
+    ConditionVariable _shouldWakeNetworkCondition;  // (M)
 
     // Condition signaled to indicate that the executor run thread should wake up.
-    stdx::condition_variable _shouldWakeExecutorCondition;  // (M)
+    ConditionVariable _shouldWakeExecutorCondition;  // (M)
 
     // Bitmask indicating which threads are runnable.
     int _waitingToRunMask;  // (M)

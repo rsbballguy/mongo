@@ -33,7 +33,7 @@
 #include <map>
 
 #include "mongo/db/namespace_string.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/notification.h"
 
 namespace mongo {
@@ -114,7 +114,7 @@ private:
 
     void _unregisterNotificationToken(std::shared_ptr<NotificationToken> token);
 
-    stdx::mutex _mutex;
+    Mutex _mutex;
     std::map<NamespaceString, NotificationsList> _notificationsList;
 };
 

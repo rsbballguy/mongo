@@ -31,7 +31,7 @@
 
 #include "mongo/db/operation_context.h"
 #include "mongo/db/record_id.h"
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/util/concurrency/mutex.h"
 
 namespace mongo {
@@ -76,11 +76,11 @@ public:
     void waitForAllEarlierOplogWritesToBeVisible(OperationContext* opCtx);
 
 private:
-    mutable stdx::mutex _stateLock;  // Protects the values below.
+    mutable Mutex _stateLock;  // Protects the values below.
     RecordId _highestSeen = RecordId();
 
     // Used to wait for all earlier oplog writes to be visible.
-    mutable stdx::condition_variable _opsBecameVisibleCV;
+    mutable ConditionVariable _opsBecameVisibleCV;
     std::set<RecordId> _uncommittedRecords;  // RecordIds that have yet to be committed/rolled back.
 };
 

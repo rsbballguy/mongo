@@ -33,7 +33,7 @@
 #include <memory>
 
 #include "mongo/s/request_types/shard_collection_gen.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/notification.h"
 #include "mongo/util/string_map.h"
 
@@ -108,7 +108,7 @@ private:
     void _setUUIDOrError(std::string nss, StatusWith<boost::optional<UUID>> swUUID);
 
     // Protects the state below
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // Map containing any collections currently being sharded
     StringMap<std::shared_ptr<ActiveShardCollectionState>> _activeShardCollectionMap;

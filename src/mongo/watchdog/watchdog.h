@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/duration.h"
 
@@ -204,8 +204,8 @@ private:
     stdx::thread _thread;
 
     // Lock to protect _state and control _thread
-    stdx::mutex _mutex;
-    stdx::condition_variable _condvar;
+    Mutex _mutex;
+    ConditionVariable _condvar;
 };
 
 /**
@@ -367,7 +367,7 @@ private:
     };
 
     // Lock to protect _state and control _thread
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // State of watchdog
     State _state{State::kNotStarted};

@@ -43,8 +43,8 @@
 #include "mongo/db/storage/wiredtiger/wiredtiger_recovery_unit.h"
 #include "mongo/db/storage/wiredtiger/wiredtiger_size_storer.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/fail_point_service.h"
 
@@ -214,7 +214,7 @@ public:
     Status updateCappedSize(OperationContext* opCtx, long long cappedSize) final;
 
     void setCappedCallback(CappedCallback* cb) {
-        stdx::lock_guard<stdx::mutex> lk(_cappedCallbackMutex);
+        stdx::lock_guard<Mutex> lk(_cappedCallbackMutex);
         _cappedCallback = cb;
     }
 
@@ -347,7 +347,7 @@ private:
     AtomicWord<long long> _cappedSleepMS;
     CappedCallback* _cappedCallback;
     bool _shuttingDown;
-    mutable stdx::mutex _cappedCallbackMutex;  // guards _cappedCallback and _shuttingDown
+    mutable Mutex _cappedCallbackMutex;  // guards _cappedCallback and _shuttingDown
 
     // See comment in ::cappedDeleteAsNeeded
     int _cappedDeleteCheckCount;

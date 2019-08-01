@@ -32,8 +32,8 @@
 #include "mongo/db/s/balancer/balancer_chunk_selection_policy.h"
 #include "mongo/db/s/balancer/balancer_random.h"
 #include "mongo/db/s/balancer/migration_manager.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 
 namespace mongo {
@@ -208,7 +208,7 @@ private:
                            const BSONObj& minKey);
 
     // Protects the state below
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // Indicates the current state of the balancer
     State _state{kStopped};
@@ -239,7 +239,7 @@ private:
 
     // Condition variable, which is signalled every time the above runtime state of the balancer
     // changes (in particular, state/balancer round and number of balancer rounds).
-    stdx::condition_variable _condVar;
+    ConditionVariable _condVar;
 
     // Number of moved chunks in last round
     int _balancedLastTime;

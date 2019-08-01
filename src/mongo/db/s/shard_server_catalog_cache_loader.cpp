@@ -375,7 +375,7 @@ void ShardServerCatalogCacheLoader::notifyOfCollectionVersionUpdate(const Namesp
 }
 
 void ShardServerCatalogCacheLoader::initializeReplicaSetRole(bool isPrimary) {
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     invariant(_role == ReplicaSetRole::None);
 
     if (isPrimary) {
@@ -386,7 +386,7 @@ void ShardServerCatalogCacheLoader::initializeReplicaSetRole(bool isPrimary) {
 }
 
 void ShardServerCatalogCacheLoader::onStepDown() {
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     invariant(_role != ReplicaSetRole::None);
     _contexts.interrupt(ErrorCodes::PrimarySteppedDown);
     ++_term;
@@ -394,7 +394,7 @@ void ShardServerCatalogCacheLoader::onStepDown() {
 }
 
 void ShardServerCatalogCacheLoader::onStepUp() {
-    stdx::lock_guard<stdx::mutex> lg(_mutex);
+    stdx::lock_guard<Mutex> lg(_mutex);
     invariant(_role != ReplicaSetRole::None);
     ++_term;
     _role = ReplicaSetRole::Primary;
@@ -402,7 +402,7 @@ void ShardServerCatalogCacheLoader::onStepUp() {
 
 void ShardServerCatalogCacheLoader::shutDown() {
     {
-        stdx::lock_guard<stdx::mutex> lg(_mutex);
+        stdx::lock_guard<Mutex> lg(_mutex);
         if (_inShutdown) {
             return;
         }
@@ -413,7 +413,7 @@ void ShardServerCatalogCacheLoader::shutDown() {
     // Prevent further scheduling, then interrupt ongoing tasks.
     _threadPool.shutdown();
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         _contexts.interrupt(ErrorCodes::InterruptedAtShutdown);
         ++_term;
     }
@@ -431,7 +431,7 @@ std::shared_ptr<Notification<void>> ShardServerCatalogCacheLoader::getChunksSinc
     bool isPrimary;
     long long term;
     std::tie(isPrimary, term) = [&] {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         return std::make_tuple(_role == ReplicaSetRole::Primary, _term);
     }();
 
@@ -447,7 +447,7 @@ std::shared_ptr<Notification<void>> ShardServerCatalogCacheLoader::getChunksSinc
                     // We may have missed an OperationContextGroup interrupt since this operation
                     // began but before the OperationContext was added to the group. So we'll check
                     // that we're still in the same _term.
-                    stdx::lock_guard<stdx::mutex> lock(_mutex);
+                    stdx::lock_guard<Mutex> lock(_mutex);
                     uassert(ErrorCodes::InterruptedDueToReplStateChange,
                             "Unable to refresh routing table because replica set state changed or "
                             "the node is shutting down.",
@@ -474,7 +474,7 @@ void ShardServerCatalogCacheLoader::getDatabase(
     bool isPrimary;
     long long term;
     std::tie(isPrimary, term) = [&] {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         return std::make_tuple(_role == ReplicaSetRole::Primary, _term);
     }();
 
@@ -490,7 +490,7 @@ void ShardServerCatalogCacheLoader::getDatabase(
                 // We may have missed an OperationContextGroup interrupt since this operation began
                 // but before the OperationContext was added to the group. So we'll check that we're
                 // still in the same _term.
-                stdx::lock_guard<stdx::mutex> lock(_mutex);
+                stdx::lock_guard<Mutex> lock(_mutex);
                 uassert(ErrorCodes::InterruptedDueToReplStateChange,
                         "Unable to refresh database because replica set state changed or the node "
                         "is shutting down.",
@@ -510,7 +510,7 @@ void ShardServerCatalogCacheLoader::getDatabase(
 
 void ShardServerCatalogCacheLoader::waitForCollectionFlush(OperationContext* opCtx,
                                                            const NamespaceString& nss) {
-    stdx::unique_lock<stdx::mutex> lg(_mutex);
+    stdx::unique_lock<Mutex> lg(_mutex);
     const auto initialTerm = _term;
 
     boost::optional<uint64_t> taskNumToWait;
@@ -561,7 +561,7 @@ void ShardServerCatalogCacheLoader::waitForCollectionFlush(OperationContext* opC
 void ShardServerCatalogCacheLoader::waitForDatabaseFlush(OperationContext* opCtx,
                                                          StringData dbName) {
 
-    stdx::unique_lock<stdx::mutex> lg(_mutex);
+    stdx::unique_lock<Mutex> lg(_mutex);
     const auto initialTerm = _term;
 
     boost::optional<uint64_t> taskNumToWait;
@@ -637,7 +637,7 @@ void ShardServerCatalogCacheLoader::_schedulePrimaryGetChunksSince(
     // Get the max version the loader has.
     const ChunkVersion maxLoaderVersion = [&] {
         {
-            stdx::lock_guard<stdx::mutex> lock(_mutex);
+            stdx::lock_guard<Mutex> lock(_mutex);
             auto taskListIt = _collAndChunkTaskLists.find(nss);
 
             if (taskListIt != _collAndChunkTaskLists.end() &&
@@ -708,7 +708,7 @@ void ShardServerCatalogCacheLoader::_schedulePrimaryGetChunksSince(
         }
 
         const auto termAfterRefresh = [&] {
-            stdx::lock_guard<stdx::mutex> lock(_mutex);
+            stdx::lock_guard<Mutex> lock(_mutex);
             return _term;
         }();
 
@@ -865,7 +865,7 @@ std::pair<bool, CollectionAndChangedChunks> ShardServerCatalogCacheLoader::_getE
     const NamespaceString& nss,
     const ChunkVersion& catalogCacheSinceVersion,
     const long long term) {
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
     auto taskListIt = _collAndChunkTaskLists.find(nss);
 
     if (taskListIt == _collAndChunkTaskLists.end()) {
@@ -900,7 +900,7 @@ void ShardServerCatalogCacheLoader::_ensureMajorityPrimaryAndScheduleCollAndChun
     OperationContext* opCtx, const NamespaceString& nss, collAndChunkTask task) {
 
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         auto& list = _collAndChunkTaskLists[nss];
         auto wasEmpty = list.empty();
@@ -922,7 +922,7 @@ void ShardServerCatalogCacheLoader::_ensureMajorityPrimaryAndScheduleDbTask(Oper
                                                                             DBTask task) {
 
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         auto& list = _dbTaskLists[dbName.toString()];
         auto wasEmpty = list.empty();
@@ -956,7 +956,7 @@ void ShardServerCatalogCacheLoader::_runCollAndChunksTasks(const NamespaceString
     }
 
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         // If task completed successfully, remove it from work queue
         if (taskFinished) {
@@ -978,7 +978,7 @@ void ShardServerCatalogCacheLoader::_runCollAndChunksTasks(const NamespaceString
                    << " caller to refresh this namespace.";
 
             {
-                stdx::lock_guard<stdx::mutex> lock(_mutex);
+                stdx::lock_guard<Mutex> lock(_mutex);
                 _collAndChunkTaskLists.erase(nss);
             }
             return;
@@ -1005,7 +1005,7 @@ void ShardServerCatalogCacheLoader::_runDbTasks(StringData dbName) {
     }
 
     {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         // If task completed successfully, remove it from work queue
         if (taskFinished) {
@@ -1027,7 +1027,7 @@ void ShardServerCatalogCacheLoader::_runDbTasks(StringData dbName) {
                    << " caller to refresh this namespace.";
 
             {
-                stdx::lock_guard<stdx::mutex> lock(_mutex);
+                stdx::lock_guard<Mutex> lock(_mutex);
                 _dbTaskLists.erase(name);
             }
             return;
@@ -1040,7 +1040,7 @@ void ShardServerCatalogCacheLoader::_runDbTasks(StringData dbName) {
 
 void ShardServerCatalogCacheLoader::_updatePersistedCollAndChunksMetadata(
     OperationContext* opCtx, const NamespaceString& nss) {
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
 
     const collAndChunkTask& task = _collAndChunkTaskLists[nss].front();
     invariant(task.dropped || !task.collectionAndChangedChunks->changedChunks.empty());
@@ -1077,7 +1077,7 @@ void ShardServerCatalogCacheLoader::_updatePersistedCollAndChunksMetadata(
 
 void ShardServerCatalogCacheLoader::_updatePersistedDbMetadata(OperationContext* opCtx,
                                                                StringData dbName) {
-    stdx::unique_lock<stdx::mutex> lock(_mutex);
+    stdx::unique_lock<Mutex> lock(_mutex);
 
     const DBTask& task = _dbTaskLists[dbName.toString()].front();
 
@@ -1174,10 +1174,10 @@ ShardServerCatalogCacheLoader::DBTask::DBTask(StatusWith<DatabaseType> swDatabas
 }
 
 ShardServerCatalogCacheLoader::CollAndChunkTaskList::CollAndChunkTaskList()
-    : _activeTaskCompletedCondVar(std::make_shared<stdx::condition_variable>()) {}
+    : _activeTaskCompletedCondVar(std::make_shared<ConditionVariable>()) {}
 
 ShardServerCatalogCacheLoader::DbTaskList::DbTaskList()
-    : _activeTaskCompletedCondVar(std::make_shared<stdx::condition_variable>()) {}
+    : _activeTaskCompletedCondVar(std::make_shared<ConditionVariable>()) {}
 
 void ShardServerCatalogCacheLoader::CollAndChunkTaskList::addTask(collAndChunkTask task) {
     if (_tasks.empty()) {
@@ -1242,7 +1242,7 @@ void ShardServerCatalogCacheLoader::DbTaskList::pop_front() {
 }
 
 void ShardServerCatalogCacheLoader::CollAndChunkTaskList::waitForActiveTaskCompletion(
-    stdx::unique_lock<stdx::mutex>& lg) {
+    stdx::unique_lock<Mutex>& lg) {
     // Increase the use_count of the condition variable shared pointer, because the entire task list
     // might get deleted during the unlocked interval
     auto condVar = _activeTaskCompletedCondVar;
@@ -1250,7 +1250,7 @@ void ShardServerCatalogCacheLoader::CollAndChunkTaskList::waitForActiveTaskCompl
 }
 
 void ShardServerCatalogCacheLoader::DbTaskList::waitForActiveTaskCompletion(
-    stdx::unique_lock<stdx::mutex>& lg) {
+    stdx::unique_lock<Mutex>& lg) {
     // Increase the use_count of the condition variable shared pointer, because the entire task list
     // might get deleted during the unlocked interval
     auto condVar = _activeTaskCompletedCondVar;

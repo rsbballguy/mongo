@@ -42,8 +42,8 @@
 #include "mongo/db/s/session_catalog_migration_source.h"
 #include "mongo/s/request_types/move_chunk_request.h"
 #include "mongo/s/shard_key_pattern.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/net/hostandport.h"
 
 namespace mongo {
@@ -285,7 +285,7 @@ private:
      * function. Should only be used in the cleanup for this class. Should use a lock wrapped
      * around this class's mutex.
      */
-    void _drainAllOutstandingOperationTrackRequests(stdx::unique_lock<stdx::mutex>& lk);
+    void _drainAllOutstandingOperationTrackRequests(stdx::unique_lock<Mutex>& lk);
 
     /**
      * Appends to the builder the list of _id of documents that were deleted during migration.
@@ -325,7 +325,7 @@ private:
     std::unique_ptr<SessionCatalogMigrationSource> _sessionCatalogSource;
 
     // Protects the entries below
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // The current state of the cloner
     State _state{kNew};
@@ -342,7 +342,7 @@ private:
     uint64_t _outstandingOperationTrackRequests{0};
 
     // Signals to any waiters once all unresolved operation tracking requests have completed.
-    stdx::condition_variable _allOutstandingOperationTrackRequestsDrained;
+    ConditionVariable _allOutstandingOperationTrackRequestsDrained;
 
     // Indicates whether new requests to track an operation are accepted.
     bool _acceptingNewOperationTrackRequests{true};

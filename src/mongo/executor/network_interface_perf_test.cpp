@@ -66,8 +66,8 @@ int timeNetworkTestMillis(std::size_t operations, NetworkInterface* net) {
     auto server = fixture.getServers()[0];
 
     std::atomic<int> remainingOps(operations);  // NOLINT
-    stdx::mutex mtx;
-    stdx::condition_variable cv;
+    Mutex mtx;
+    ConditionVariable cv;
     Timer t;
 
     // This lambda function is declared here since it is mutually recursive with another callback
@@ -81,7 +81,7 @@ int timeNetworkTestMillis(std::size_t operations, NetworkInterface* net) {
         if (--remainingOps) {
             return func();
         }
-        stdx::unique_lock<stdx::mutex> lk(mtx);
+        stdx::unique_lock<Mutex> lk(mtx);
         cv.notify_one();
     };
 
@@ -93,7 +93,7 @@ int timeNetworkTestMillis(std::size_t operations, NetworkInterface* net) {
 
     func();
 
-    stdx::unique_lock<stdx::mutex> lk(mtx);
+    stdx::unique_lock<Mutex> lk(mtx);
     cv.wait(lk, [&] { return remainingOps.load() == 0; });
 
     return t.millis();

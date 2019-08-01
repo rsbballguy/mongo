@@ -33,7 +33,7 @@
 
 #include "mongo/bson/oid.h"
 #include "mongo/s/shard_id.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -136,7 +136,7 @@ private:
     }
 
     // Protects state below
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // State of the initialization of the sharding state along with any potential errors
     AtomicWord<unsigned> _initializationState{static_cast<uint32_t>(InitializationState::kNew)};

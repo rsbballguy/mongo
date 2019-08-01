@@ -45,7 +45,7 @@
 #include "mongo/s/catalog/type_chunk.h"
 #include "mongo/s/client/shard_registry.h"
 #include "mongo/s/shard_server_test_fixture.h"
-#include "mongo/stdx/condition_variable.h"
+#include "mongo/platform/condition_variable.h"
 #include "mongo/unittest/unittest.h"
 #include "mongo/util/assert_util.h"
 
