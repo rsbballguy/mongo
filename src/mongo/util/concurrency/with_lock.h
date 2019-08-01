@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/assert_util.h"
 
 #include <utility>
@@ -56,7 +56,7 @@ namespace mongo {
  *
  * A call to such a function looks like this:
  *
- *     stdx::lock_guard<stdx::mutex> lk(_mutex);
+ *     stdx::lock_guard<Mutex> lk(_mutex);
  *     _clobber(lk, opCtx);  // instead of _clobber_inlock(opCtx)
  *
  * Note that the formal argument need not (and should not) be named unless it is needed to pass

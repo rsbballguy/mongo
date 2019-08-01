@@ -33,8 +33,8 @@
 #endif
 
 #include "mongo/db/operation_context.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/mutex.h"
 #include "mongo/util/time_support.h"
 
@@ -87,14 +87,14 @@ private:
 
     // You can read _outof without a lock, but have to hold _resizeMutex to change.
     AtomicWord<int> _outof;
-    stdx::mutex _resizeMutex;
+    Mutex _resizeMutex;
 #else
     bool _tryAcquire();
 
     AtomicWord<int> _outof;
     int _num;
-    stdx::mutex _mutex;
-    stdx::condition_variable _newTicket;
+    Mutex _mutex;
+    ConditionVariable _newTicket;
 #endif
 };
 

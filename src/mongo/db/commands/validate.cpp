@@ -56,7 +56,7 @@ MONGO_FAIL_POINT_DEFINE(validateCmdCollectionNotValid);
 namespace {
 
 // Protects the state below.
-stdx::mutex _validationMutex;
+Mutex _validationMutex;
 
 // Holds the set of full `databaseName.collectionName` namespace strings in progress. Validation
 // commands register themselves in this data structure so that subsequent commands on the same
@@ -66,7 +66,7 @@ std::set<std::string> _validationsInProgress;
 // This is waited upon if there is found to already be a validation command running on the targeted
 // namespace, as _validationsInProgress would indicate. This is signaled when a validation command
 // finishes on any namespace.
-stdx::condition_variable _validationNotifier;
+ConditionVariable _validationNotifier;
 
 }  // namespace
 
@@ -162,7 +162,7 @@ public:
 
         // Only one validation per collection can be in progress, the rest wait.
         {
-            stdx::unique_lock<stdx::mutex> lock(_validationMutex);
+            stdx::unique_lock<Mutex> lock(_validationMutex);
             try {
                 while (_validationsInProgress.find(nss.ns()) != _validationsInProgress.end()) {
                     opCtx->waitForConditionOrInterrupt(_validationNotifier, lock);
@@ -179,7 +179,7 @@ public:
         }
 
         ON_BLOCK_EXIT([&] {
-            stdx::lock_guard<stdx::mutex> lock(_validationMutex);
+            stdx::lock_guard<Mutex> lock(_validationMutex);
             _validationsInProgress.erase(nss.ns());
             _validationNotifier.notify_all();
         });

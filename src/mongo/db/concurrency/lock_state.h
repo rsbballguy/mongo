@@ -75,8 +75,8 @@ private:
     virtual void notify(ResourceId resId, LockResult result);
 
     // These two go together to implement the conditional variable pattern.
-    stdx::mutex _mutex;
-    stdx::condition_variable _cond;
+    Mutex _mutex;
+    ConditionVariable _cond;
 
     // Result from the last call to notify
     LockResult _result;

@@ -31,8 +31,8 @@
 
 #include "mongo/bson/bsonobjbuilder.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -93,8 +93,8 @@ private:
     // Use an int64_t as this is serialized to bson which does not support unsigned 64-bit numbers.
     AtomicWord<std::int64_t> _totalTimeAcquiringMicros;
 
-    stdx::mutex _mutex;
-    stdx::condition_variable _cv;
+    Mutex _mutex;
+    ConditionVariable _cv;
     int _tickets;
 
     bool _inShutdown;  // used to synchronize shutdown of the ticket refresher job

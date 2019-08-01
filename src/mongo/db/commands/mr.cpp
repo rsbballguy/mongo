@@ -72,7 +72,7 @@
 #include "mongo/s/shard_key_pattern.h"
 #include "mongo/s/stale_exception.h"
 #include "mongo/scripting/engine.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/debug_util.h"
 #include "mongo/util/log.h"
 #include "mongo/util/scopeguard.h"

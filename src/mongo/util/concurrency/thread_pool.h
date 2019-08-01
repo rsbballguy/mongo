@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/util/concurrency/thread_pool_interface.h"
 #include "mongo/util/time_support.h"
@@ -189,7 +189,7 @@ private:
     /**
      * Implementation of join once _mutex is owned by "lk".
      */
-    void _join_inlock(stdx::unique_lock<stdx::mutex>* lk);
+    void _join_inlock(stdx::unique_lock<Mutex>* lk);
 
     /**
      * Runs the remaining tasks on a new thread as part of the join process, blocking until
@@ -201,7 +201,7 @@ private:
      * Executes one task from _pendingTasks. "lk" must own _mutex, and _pendingTasks must have at
      * least one entry.
      */
-    void _doOneTask(stdx::unique_lock<stdx::mutex>* lk) noexcept;
+    void _doOneTask(stdx::unique_lock<Mutex>* lk) noexcept;
 
     /**
      * Changes the lifecycle state (_state) of the pool and wakes up any threads waiting for a state
@@ -213,7 +213,7 @@ private:
     const Options _options;
 
     // Mutex guarding all non-const member variables.
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
 
     // This variable represents the lifecycle state of the pool.
     //
@@ -223,13 +223,13 @@ private:
 
     // Condition signaled to indicate that there is work in the _pendingTasks queue, or
     // that the system is shutting down.
-    stdx::condition_variable _workAvailable;
+    ConditionVariable _workAvailable;
 
     // Condition signaled to indicate that there is no work in the _pendingTasks queue.
-    stdx::condition_variable _poolIsIdle;
+    ConditionVariable _poolIsIdle;
 
     // Condition variable signaled whenever _state changes.
-    stdx::condition_variable _stateChange;
+    ConditionVariable _stateChange;
 
     // Queue of yet-to-be-executed tasks.
     TaskList _pendingTasks;
