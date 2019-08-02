@@ -39,7 +39,7 @@
 #include "mongo/executor/task_executor.h"
 #include "mongo/s/client/shard.h"
 #include "mongo/s/query/async_results_merger_params_gen.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/net/hostandport.h"
 #include "mongo/util/time_support.h"
 

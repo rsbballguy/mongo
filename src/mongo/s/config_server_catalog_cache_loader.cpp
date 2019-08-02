@@ -160,7 +160,7 @@ void ConfigServerCatalogCacheLoader::onStepUp() {
 
 void ConfigServerCatalogCacheLoader::shutDown() {
     {
-        stdx::lock_guard<stdx::mutex> lg(_mutex);
+        stdx::lock_guard<Mutex> lg(_mutex);
         if (_inShutdown) {
             return;
         }

@@ -157,13 +157,13 @@ TEST_F(ResultsMergerTestFixture, ShouldBeAbleToBlockUntilNextResultIsReadyWithDe
     future.default_timed_get();
 
     // Used for synchronizing the background thread with this thread.
-    stdx::mutex mutex;
-    stdx::unique_lock<stdx::mutex> lk(mutex);
+    Mutex mutex;
+    stdx::unique_lock<Mutex> lk(mutex);
 
     // Issue a blocking wait for the next result asynchronously on a different thread.
     future = launchAsync([&]() {
         // Block until the main thread has responded to the getMore.
-        stdx::unique_lock<stdx::mutex> lk(mutex);
+        stdx::unique_lock<Mutex> lk(mutex);
 
         auto next = unittest::assertGet(blockingMerger.next(
             operationContext(), RouterExecStage::ExecContext::kGetMoreNoResultsYet));

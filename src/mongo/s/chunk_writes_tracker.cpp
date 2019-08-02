@@ -52,7 +52,7 @@ bool ChunkWritesTracker::shouldSplit(uint64_t maxChunkSize) {
 }
 
 bool ChunkWritesTracker::acquireSplitLock() {
-    stdx::lock_guard<stdx::mutex> lk(_mtx);
+    stdx::lock_guard<Mutex> lk(_mtx);
 
     if (!_isLockedForSplitting) {
         _isLockedForSplitting = true;
