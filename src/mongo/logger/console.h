@@ -31,7 +31,7 @@
 
 #include <iosfwd>
 
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 
@@ -56,7 +56,7 @@ public:
     std::ostream& out();
 
 private:
-    stdx::unique_lock<stdx::mutex> _consoleLock;
+    stdx::unique_lock<Mutex> _consoleLock;
 };
 
 }  // namespace mongo

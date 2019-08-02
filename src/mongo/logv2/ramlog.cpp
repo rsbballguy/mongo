@@ -43,7 +43,7 @@ using std::string;
 
 namespace {
 typedef std::map<string, RamLog*> RM;
-stdx::mutex* _namedLock = NULL;
+Mutex* _namedLock = NULL;
 RM* _named = NULL;
 
 }  // namespace
@@ -57,7 +57,7 @@ RamLog::RamLog(const std::string& name) : _name(name), _totalLinesWritten(0), _l
 RamLog::~RamLog() {}
 
 void RamLog::write(const std::string& str) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _lastWrite = time(0);
     _totalLinesWritten++;
 
@@ -80,7 +80,7 @@ void RamLog::write(const std::string& str) {
 }
 
 void RamLog::clear() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _totalLinesWritten = 0;
     _lastWrite = 0;
     h = 0;
@@ -156,10 +156,10 @@ RamLog::LineIterator::LineIterator(RamLog* ramlog)
 RamLog* RamLog::get(const std::string& name) {
     if (!_namedLock) {
         // Guaranteed to happen before multi-threaded operation.
-        _namedLock = new stdx::mutex();
+        _namedLock = new Mutex();
     }
 
-    stdx::lock_guard<stdx::mutex> lk(*_namedLock);
+    stdx::lock_guard<Mutex> lk(*_namedLock);
     if (!_named) {
         // Guaranteed to happen before multi-threaded operation.
         _named = new RM();
@@ -176,7 +176,7 @@ RamLog* RamLog::get(const std::string& name) {
 RamLog* RamLog::getIfExists(const std::string& name) {
     if (!_named)
         return NULL;
-    stdx::lock_guard<stdx::mutex> lk(*_namedLock);
+    stdx::lock_guard<Mutex> lk(*_namedLock);
     return mapFindWithDefault(*_named, name, static_cast<RamLog*>(NULL));
 }
 
@@ -184,7 +184,7 @@ void RamLog::getNames(std::vector<string>& names) {
     if (!_named)
         return;
 
-    stdx::lock_guard<stdx::mutex> lk(*_namedLock);
+    stdx::lock_guard<Mutex> lk(*_namedLock);
     for (RM::iterator i = _named->begin(); i != _named->end(); ++i) {
         if (i->second->n)
             names.push_back(i->first);
@@ -201,7 +201,7 @@ MONGO_INITIALIZER(RamLogCatalogV2)(InitializerContext*) {
             return Status(ErrorCodes::InternalError,
                           "Inconsistent intiailization of RamLogCatalog.");
         }
-        _namedLock = new stdx::mutex();
+        _namedLock = new Mutex();
         _named = new RM();
     }
 

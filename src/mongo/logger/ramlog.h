@@ -39,7 +39,7 @@
 #include "mongo/logger/appender.h"
 #include "mongo/logger/message_event.h"
 #include "mongo/logger/tee.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/concurrency/mutex.h"
 
 namespace mongo {
@@ -115,7 +115,7 @@ private:
 
     const char* getLine_inlock(unsigned lineNumber) const;
 
-    stdx::mutex _mutex;  // Guards all non-static data.
+    Mutex _mutex;  // Guards all non-static data.
     char lines[N][C];
     unsigned h;  // current position
     unsigned n;  // number of lines stores 0 o N
@@ -166,7 +166,7 @@ public:
 
 private:
     const RamLog* _ramlog;
-    stdx::lock_guard<stdx::mutex> _lock;
+    stdx::lock_guard<Mutex> _lock;
     unsigned _nextLineIndex;
 };
 

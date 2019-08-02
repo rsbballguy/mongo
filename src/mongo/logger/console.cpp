@@ -43,8 +43,8 @@
 namespace mongo {
 namespace {
 
-stdx::mutex& consoleMutex() {
-    static stdx::mutex instance;
+Mutex& consoleMutex() {
+    static Mutex instance;
     return instance;
 }
 
@@ -255,7 +255,7 @@ Console::Console() : _consoleLock() {
     // single-threaded context via a mongo initializer above.
     static const std::ios_base::Init initializeCout;
 
-    stdx::unique_lock<stdx::mutex> lk(consoleMutex());
+    stdx::unique_lock<Mutex> lk(consoleMutex());
     lk.swap(_consoleLock);
 }
 
