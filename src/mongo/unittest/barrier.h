@@ -29,8 +29,8 @@
 
 #pragma once
 
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 namespace unittest {
@@ -60,8 +60,8 @@ private:
     size_t _threadCount;
     size_t _threadsWaiting;
     uint64_t _generation;
-    stdx::mutex _mutex;
-    stdx::condition_variable _condition;
+    Mutex _mutex;
+    ConditionVariable _condition;
 };
 
 }  // namespace unittest

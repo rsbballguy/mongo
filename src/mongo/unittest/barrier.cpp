@@ -42,7 +42,7 @@ Barrier::Barrier(size_t threadCount)
 }
 
 void Barrier::countDownAndWait() {
-    stdx::unique_lock<stdx::mutex> _lock(_mutex);
+    stdx::unique_lock<Mutex> _lock(_mutex);
     _threadsWaiting--;
     if (_threadsWaiting == 0) {
         _generation++;

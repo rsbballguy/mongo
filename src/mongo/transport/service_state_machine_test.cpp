@@ -282,20 +282,20 @@ private:
 class SimpleEvent {
 public:
     void signal() {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         _signaled = true;
         _cond.notify_one();
     }
 
     void wait() {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         _cond.wait(lk, [this] { return _signaled; });
         _signaled = false;
     }
 
 private:
-    stdx::mutex _mutex;
-    stdx::condition_variable _cond;
+    Mutex _mutex;
+    ConditionVariable _cond;
     bool _signaled = false;
 };
 

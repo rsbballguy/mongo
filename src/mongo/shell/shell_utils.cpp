@@ -57,7 +57,7 @@
 #include "mongo/shell/shell_options.h"
 #include "mongo/shell/shell_utils_extended.h"
 #include "mongo/shell/shell_utils_launcher.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/fail_point_service.h"
 #include "mongo/util/log.h"
 #include "mongo/util/processinfo.h"
@@ -566,14 +566,14 @@ void ConnectionRegistry::registerConnection(DBClientBase& client) {
     BSONObj info;
     if (client.runCommand("admin", BSON("whatsmyuri" << 1), info)) {
         std::string connstr = client.getServerAddress();
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         _connectionUris[connstr].insert(info["you"].str());
     }
 }
 
 void ConnectionRegistry::killOperationsOnAllConnections(bool withPrompt) const {
     Prompter prompter("do you want to kill the current op(s) on the server?");
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     for (auto& connection : _connectionUris) {
         auto status = ConnectionString::parse(connection.first);
         if (!status.isOK()) {
@@ -668,6 +668,6 @@ bool fileExists(const std::string& file) {
 }
 
 
-stdx::mutex& mongoProgramOutputMutex(*(new stdx::mutex()));
+Mutex& mongoProgramOutputMutex(*(new Mutex()));
 }  // namespace shell_utils
 }  // namespace mongo

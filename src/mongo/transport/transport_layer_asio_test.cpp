@@ -48,7 +48,7 @@ namespace {
 class ServiceEntryPointUtil : public ServiceEntryPoint {
 public:
     void startSession(transport::SessionHandle session) override {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         _sessions.push_back(std::move(session));
         log() << "started session";
         _cv.notify_one();
@@ -58,7 +58,7 @@ public:
         log() << "end all sessions";
         std::vector<transport::SessionHandle> old_sessions;
         {
-            stdx::unique_lock<stdx::mutex> lock(_mutex);
+            stdx::unique_lock<Mutex> lock(_mutex);
             old_sessions.swap(_sessions);
         }
         old_sessions.clear();
@@ -75,7 +75,7 @@ public:
     void appendStats(BSONObjBuilder*) const override {}
 
     size_t numOpenSessions() const override {
-        stdx::unique_lock<stdx::mutex> lock(_mutex);
+        stdx::unique_lock<Mutex> lock(_mutex);
         return _sessions.size();
     }
 
@@ -88,13 +88,13 @@ public:
     }
 
     void waitForConnect() {
-        stdx::unique_lock<stdx::mutex> lock(_mutex);
+        stdx::unique_lock<Mutex> lock(_mutex);
         _cv.wait(lock, [&] { return !_sessions.empty(); });
     }
 
 private:
-    mutable stdx::mutex _mutex;
-    stdx::condition_variable _cv;
+    mutable Mutex _mutex;
+    ConditionVariable _cv;
     std::vector<transport::SessionHandle> _sessions;
     transport::TransportLayer* _transport = nullptr;
 };
@@ -107,7 +107,7 @@ public:
             SockAddr sa{"localhost", _port, AF_INET};
             s.connect(sa);
             log() << "connection: port " << _port;
-            stdx::unique_lock<stdx::mutex> lk(_mutex);
+            stdx::unique_lock<Mutex> lk(_mutex);
             _cv.wait(lk, [&] { return _stop; });
             log() << "connection: Rx stop request";
         }};
@@ -115,7 +115,7 @@ public:
 
     void stop() {
         {
-            stdx::unique_lock<stdx::mutex> lk(_mutex);
+            stdx::unique_lock<Mutex> lk(_mutex);
             _stop = true;
         }
         log() << "connection: Tx stop request";
@@ -125,8 +125,8 @@ public:
     }
 
 private:
-    stdx::mutex _mutex;
-    stdx::condition_variable _cv;
+    Mutex _mutex;
+    ConditionVariable _cv;
     stdx::thread _thr;
     bool _stop = false;
     int _port;
@@ -196,7 +196,7 @@ public:
     }
 
     bool waitForTimeout(boost::optional<Milliseconds> timeout = boost::none) {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         bool ret = true;
         if (timeout) {
             ret = _cond.wait_for(lk, timeout->toSystemDuration(), [this] { return _finished; });
@@ -210,7 +210,7 @@ public:
 
 protected:
     void notifyComplete() {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         _finished = true;
         _cond.notify_one();
     }
@@ -221,9 +221,9 @@ protected:
     }
 
 private:
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
-    stdx::condition_variable _cond;
+    ConditionVariable _cond;
     bool _finished = false;
 
     std::vector<stdx::thread> _workerThreads;

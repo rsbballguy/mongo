@@ -32,8 +32,8 @@
 #include <list>
 
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/variant.h"
 #include "mongo/transport/service_entry_point.h"
 #include "mongo/transport/service_executor_reserved.h"
@@ -81,8 +81,8 @@ private:
     ServiceContext* const _svcCtx;
     AtomicWord<std::size_t> _nWorkers;
 
-    mutable stdx::mutex _sessionsMutex;
-    stdx::condition_variable _shutdownCondition;
+    mutable Mutex _sessionsMutex;
+    ConditionVariable _shutdownCondition;
     SSMList _sessions;
 
     size_t _maxNumConnections{DEFAULT_MAX_CONN};

@@ -46,7 +46,7 @@
 #include "mongo/logger/logger.h"
 #include "mongo/logger/message_event_utf8_encoder.h"
 #include "mongo/logger/message_log_domain.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/assert_util.h"
 #include "mongo/util/log.h"
 #include "mongo/util/stacktrace.h"
@@ -231,7 +231,7 @@ public:
         if (!_encoder.encode(event, _os)) {
             return Status(ErrorCodes::LogWriteFailed, "Failed to append to LogTestAppender.");
         }
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         if (_enabled) {
             _lines->push_back(_os.str());
         }
@@ -239,19 +239,19 @@ public:
     }
 
     void enable() {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         invariant(!_enabled);
         _enabled = true;
     }
 
     void disable() {
-        stdx::lock_guard<stdx::mutex> lk(_mutex);
+        stdx::lock_guard<Mutex> lk(_mutex);
         invariant(_enabled);
         _enabled = false;
     }
 
 private:
-    stdx::mutex _mutex;
+    Mutex _mutex;
     bool _enabled = false;
     logger::MessageEventDetailsEncoder _encoder;
     std::vector<std::string>* _lines;

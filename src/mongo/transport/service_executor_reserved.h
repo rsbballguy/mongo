@@ -33,8 +33,8 @@
 
 #include "mongo/base/status.h"
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/transport/service_executor.h"
 #include "mongo/transport/service_executor_task_names.h"
 
@@ -74,9 +74,9 @@ private:
 
     AtomicWord<bool> _stillRunning{false};
 
-    mutable stdx::mutex _mutex;
-    stdx::condition_variable _threadWakeup;
-    stdx::condition_variable _shutdownCondition;
+    mutable Mutex _mutex;
+    ConditionVariable _threadWakeup;
+    ConditionVariable _shutdownCondition;
 
     std::deque<Task> _readyTasks;
 

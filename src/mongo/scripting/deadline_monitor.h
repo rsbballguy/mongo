@@ -31,8 +31,8 @@
 #include <cstdint>
 
 #include "mongo/platform/atomic_word.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/stdx/thread.h"
 #include "mongo/stdx/unordered_map.h"
 #include "mongo/util/concurrency/idle_thread_block.h"
@@ -84,7 +84,7 @@ public:
     ~DeadlineMonitor() {
         {
             // ensure the monitor thread has been stopped before destruction
-            stdx::lock_guard<stdx::mutex> lk(_deadlineMutex);
+            stdx::lock_guard<Mutex> lk(_deadlineMutex);
             _inShutdown = true;
             _newDeadlineAvailable.notify_one();
         }
@@ -105,7 +105,7 @@ public:
         } else {
             deadline = Date_t::max();
         }
-        stdx::lock_guard<stdx::mutex> lk(_deadlineMutex);
+        stdx::lock_guard<Mutex> lk(_deadlineMutex);
 
         if (_tasks.find(task) == _tasks.end()) {
             _tasks.emplace(task, deadline);
@@ -123,7 +123,7 @@ public:
      * @return true  if the task was found and erased
      */
     bool stopDeadline(_Task* const task) {
-        stdx::lock_guard<stdx::mutex> lk(_deadlineMutex);
+        stdx::lock_guard<Mutex> lk(_deadlineMutex);
         return _tasks.erase(task);
     }
 
@@ -135,7 +135,7 @@ private:
      */
     void deadlineMonitorThread() {
         setThreadName("DeadlineMonitor");
-        stdx::unique_lock<stdx::mutex> lk(_deadlineMutex);
+        stdx::unique_lock<Mutex> lk(_deadlineMutex);
         Date_t lastInterruptCycle = Date_t::now();
         while (!_inShutdown) {
             // get the next interval to wait
@@ -188,8 +188,8 @@ private:
 
     using TaskDeadlineMap = stdx::unordered_map<_Task*, Date_t>;
     TaskDeadlineMap _tasks;      // map of running tasks with deadlines
-    stdx::mutex _deadlineMutex;  // protects all non-const members, except _monitorThread
-    stdx::condition_variable _newDeadlineAvailable;    // Signaled for timeout, start and stop
+    Mutex _deadlineMutex;  // protects all non-const members, except _monitorThread
+    ConditionVariable _newDeadlineAvailable;    // Signaled for timeout, start and stop
     stdx::thread _monitorThread;                       // the deadline monitor thread
     Date_t _nearestDeadlineWallclock = Date_t::max();  // absolute time of the nearest deadline
     bool _inShutdown = false;

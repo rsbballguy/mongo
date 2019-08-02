@@ -40,24 +40,24 @@ Milliseconds ClockSourceMock::getPrecision() {
 }
 
 Date_t ClockSourceMock::now() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _now;
 }
 
 void ClockSourceMock::advance(Milliseconds ms) {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _now += ms;
     _processAlarms(std::move(lk));
 }
 
 void ClockSourceMock::reset(Date_t newNow) {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     _now = newNow;
     _processAlarms(std::move(lk));
 }
 
 Status ClockSourceMock::setAlarm(Date_t when, unique_function<void()> action) {
-    stdx::unique_lock<stdx::mutex> lk(_mutex);
+    stdx::unique_lock<Mutex> lk(_mutex);
     if (when <= _now) {
         lk.unlock();
         action();
@@ -67,7 +67,7 @@ Status ClockSourceMock::setAlarm(Date_t when, unique_function<void()> action) {
     return Status::OK();
 }
 
-void ClockSourceMock::_processAlarms(stdx::unique_lock<stdx::mutex> lk) {
+void ClockSourceMock::_processAlarms(stdx::unique_lock<Mutex> lk) {
     using std::swap;
     invariant(lk.owns_lock());
     std::vector<Alarm> readyAlarms;
