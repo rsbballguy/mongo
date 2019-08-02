@@ -31,9 +31,7 @@
 #include "mongo/platform/mutex.h"
 
 namespace mongo {
-void ConditionVariable::wait(lock_t& lock) {
-    _condvar.wait(lock);
-}
+
 
 void ConditionVariable::notify_one() noexcept {
     _condvar.notify_one();

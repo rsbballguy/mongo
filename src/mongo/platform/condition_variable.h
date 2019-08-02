@@ -40,25 +40,26 @@ class ConditionVariable : private stdx::condition_variable_any {
     friend class ::mongo::Waitable;
 
 public:
-    void wait(lock_t& lock);
+    template <class Lock>
+    void wait(Lock& lock);
 
-    template <class Predicate>
-    void wait(lock_t& lock, Predicate pred);
+    template <class Lock, class Predicate>
+    void wait(Lock& lock, Predicate pred);
 
-    template <class Rep, class Period>
-    stdx::cv_status wait_for(lock_t& lock, const stdx::chrono::duration<Rep, Period>& rel_time);
+    template <class Lock, class Rep, class Period>
+    stdx::cv_status wait_for(Lock& lock, const stdx::chrono::duration<Rep, Period>& rel_time);
 
-    template <class Rep, class Period, class Predicate>
-    bool wait_for(lock_t& lock,
+    template <class Lock, class Rep, class Period, class Predicate>
+    bool wait_for(Lock& lock,
                   const stdx::chrono::duration<Rep, Period>& rel_time,
                   Predicate pred);
 
-    template <class Clock, class Duration>
-    stdx::cv_status wait_until(lock_t& lock,
+    template <class Lock, class Clock, class Duration>
+    stdx::cv_status wait_until(Lock& lock,
                                const stdx::chrono::time_point<Clock, Duration>& timeout_time);
 
-    template <class Clock, class Duration, class Predicate>
-    bool wait_until(lock_t& lock,
+    template <class Lock, class Clock, class Duration, class Predicate>
+    bool wait_until(Lock& lock,
                     const stdx::chrono::time_point<Clock, Duration>& timeout_time,
                     Predicate pred);
 
@@ -69,32 +70,37 @@ private:
     stdx::condition_variable_any _condvar;
 };
 
-template <class Predicate>
-void ConditionVariable::wait(lock_t& lock, Predicate pred) {
+template <class Lock>
+void ConditionVariable::wait(Lock& lock) {
+    _condvar.wait(lock);
+}
+
+template <class Lock, class Predicate>
+void ConditionVariable::wait(Lock& lock, Predicate pred) {
     _condvar.wait(lock, pred);
 }
 
-template <class Rep, class Period>
-stdx::cv_status ConditionVariable::wait_for(lock_t& lock,
+template <class Lock, class Rep, class Period>
+stdx::cv_status ConditionVariable::wait_for(Lock& lock,
                                             const stdx::chrono::duration<Rep, Period>& rel_time) {
     return _condvar.wait_for(lock, rel_time);
 }
 
-template <class Rep, class Period, class Predicate>
-bool ConditionVariable::wait_for(lock_t& lock,
+template <class Lock, class Rep, class Period, class Predicate>
+bool ConditionVariable::wait_for(Lock& lock,
                                  const stdx::chrono::duration<Rep, Period>& rel_time,
                                  Predicate pred) {
     return _condvar.wait_for(lock, rel_time, pred);
 }
 
-template <class Clock, class Duration>
+template <class Lock, class Clock, class Duration>
 stdx::cv_status ConditionVariable::wait_until(
-    lock_t& lock, const stdx::chrono::time_point<Clock, Duration>& timeout_time) {
+    Lock& lock, const stdx::chrono::time_point<Clock, Duration>& timeout_time) {
     return _condvar.wait_until(lock, timeout_time);
 }
 
-template <class Clock, class Duration, class Predicate>
-bool ConditionVariable::wait_until(lock_t& lock,
+template <class Lock, class Clock, class Duration, class Predicate>
+bool ConditionVariable::wait_until(Lock& lock,
                                    const stdx::chrono::time_point<Clock, Duration>& timeout_time,
                                    Predicate pred) {
     return _condvar.wait_until(lock, timeout_time, pred);

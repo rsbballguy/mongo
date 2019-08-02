@@ -130,10 +130,10 @@ public:
 
 private:
     // Condition variable to signal consumer
-    stdx::condition_variable _condvar;
+    ConditionVariable _condvar;
 
     // Lock for condition variable and to protect state
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // Indicates whether queue has been stopped.
     bool _stop{false};

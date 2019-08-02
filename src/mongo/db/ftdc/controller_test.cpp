@@ -107,7 +107,7 @@ public:
     }
 
     void wait() {
-        stdx::unique_lock<stdx::mutex> lck(_mutex);
+        stdx::unique_lock<Mutex> lck(_mutex);
         while (_counter < _wait) {
             _condvar.wait(lck);
         }
@@ -133,8 +133,8 @@ private:
 
     std::vector<BSONObj> _docs;
 
-    stdx::mutex _mutex;
-    stdx::condition_variable _condvar;
+    Mutex _mutex;
+    ConditionVariable _condvar;
     std::uint32_t _wait{0};
 };
 

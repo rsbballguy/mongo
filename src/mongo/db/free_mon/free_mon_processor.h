@@ -235,7 +235,7 @@ public:
      * Reset countdown latch wait for N events.
      */
     void reset(uint32_t count) {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
         dassert(_count == 0);
         dassert(count > 0);
         _count = count;
@@ -245,7 +245,7 @@ public:
      * Count down an event.
      */
     void countDown() {
-        stdx::lock_guard<stdx::mutex> lock(_mutex);
+        stdx::lock_guard<Mutex> lock(_mutex);
 
         if (_count > 0) {
             --_count;
@@ -259,16 +259,16 @@ public:
      * Wait until the N events specified in reset have occured.
      */
     void wait() {
-        stdx::unique_lock<stdx::mutex> lock(_mutex);
+        stdx::unique_lock<Mutex> lock(_mutex);
         _condvar.wait(lock, [&] { return _count == 0; });
     }
 
 private:
     // mutex to break count and cond var
-    stdx::mutex _mutex;
+    Mutex _mutex;
 
     // cond var to signal and wait on
-    stdx::condition_variable _condvar;
+    ConditionVariable _condvar;
 
     // count of events to wait for
     size_t _count;

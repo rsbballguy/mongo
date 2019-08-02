@@ -523,11 +523,11 @@ TEST_F(DocumentSourceExchangeTest, RandomExchangeNConsumerResourceYielding) {
     // thread holds this while it calls getNext(). This is to simulate the case where a thread may
     // hold some "real" resources which need to be yielded while waiting, such as the Session, or
     // the locks held in a transaction.
-    stdx::mutex artificalGlobalMutex;
+    Mutex artificalGlobalMutex;
 
     boost::intrusive_ptr<Exchange> ex =
         new Exchange(std::move(spec), unittest::assertGet(Pipeline::create({source}, getExpCtx())));
-
+]
     std::vector<ThreadInfo> threads;
 
     for (size_t idx = 0; idx < nConsumers; ++idx) {

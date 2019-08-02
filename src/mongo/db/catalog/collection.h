@@ -51,9 +51,9 @@
 #include "mongo/db/storage/capped_callback.h"
 #include "mongo/db/storage/record_store.h"
 #include "mongo/db/storage/snapshot.h"
-#include "mongo/stdx/condition_variable.h"
-#include "mongo/stdx/mutex.h"
 #include "mongo/util/decorable.h"
+#include "mongo/platform/condition_variable.h"
+#include "mongo/platform/mutex.h"
 
 namespace mongo {
 class CappedCallback;
@@ -133,10 +133,10 @@ public:
 
 private:
     // Signalled when a successful insert is made into a capped collection.
-    mutable stdx::condition_variable _notifier;
+    mutable ConditionVariable _notifier;
 
     // Mutex used with '_notifier'. Protects access to '_version'.
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
 
     // A counter, incremented on insertion of new data into the capped collection.
     //
