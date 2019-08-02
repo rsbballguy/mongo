@@ -175,7 +175,7 @@ private:
     bool _resetNumRecsIfNeeded(OperationContext* opCtx, int64_t newNumRecs);
 
     mutable int64_t _numRecs;
-    mutable stdx::mutex _numRecsMutex;
+    mutable Mutex _numRecsMutex;
     mutable bool _isNumRecsInitialized = false;
 
     /**
@@ -196,7 +196,7 @@ private:
     bool _resetDataSizeIfNeeded(OperationContext* opCtx, int64_t newDataSize);
 
     mutable int64_t _dataSize;
-    mutable stdx::mutex _dataSizeMutex;
+    mutable Mutex _dataSizeMutex;
     mutable bool _isDataSizeInitialized = false;
 };
 

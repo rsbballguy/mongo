@@ -879,7 +879,7 @@ StorageEngineImpl::TimestampMonitor::TimestampMonitor(KVEngine* engine, Periodic
 
 StorageEngineImpl::TimestampMonitor::~TimestampMonitor() {
     log() << "Timestamp monitor shutting down";
-    stdx::lock_guard<stdx::mutex> lock(_monitorMutex);
+    stdx::lock_guard<Mutex> lock(_monitorMutex);
     invariant(_listeners.empty());
 }
 
@@ -891,7 +891,7 @@ void StorageEngineImpl::TimestampMonitor::startup() {
         "TimestampMonitor",
         [&](Client* client) {
             {
-                stdx::lock_guard<stdx::mutex> lock(_monitorMutex);
+                stdx::lock_guard<Mutex> lock(_monitorMutex);
                 if (_listeners.empty()) {
                     return;
                 }
@@ -958,7 +958,7 @@ void StorageEngineImpl::TimestampMonitor::startup() {
 }
 
 void StorageEngineImpl::TimestampMonitor::notifyAll(TimestampType type, Timestamp newTimestamp) {
-    stdx::lock_guard<stdx::mutex> lock(_monitorMutex);
+    stdx::lock_guard<Mutex> lock(_monitorMutex);
     for (auto& listener : _listeners) {
         if (listener->getType() == type) {
             listener->notify(newTimestamp);
@@ -967,7 +967,7 @@ void StorageEngineImpl::TimestampMonitor::notifyAll(TimestampType type, Timestam
 }
 
 void StorageEngineImpl::TimestampMonitor::addListener(TimestampListener* listener) {
-    stdx::lock_guard<stdx::mutex> lock(_monitorMutex);
+    stdx::lock_guard<Mutex> lock(_monitorMutex);
     if (std::find(_listeners.begin(), _listeners.end(), listener) != _listeners.end()) {
         bool listenerAlreadyRegistered = true;
         invariant(!listenerAlreadyRegistered);
@@ -976,7 +976,7 @@ void StorageEngineImpl::TimestampMonitor::addListener(TimestampListener* listene
 }
 
 void StorageEngineImpl::TimestampMonitor::removeListener(TimestampListener* listener) {
-    stdx::lock_guard<stdx::mutex> lock(_monitorMutex);
+    stdx::lock_guard<Mutex> lock(_monitorMutex);
     if (std::find(_listeners.begin(), _listeners.end(), listener) == _listeners.end()) {
         bool listenerNotRegistered = true;
         invariant(!listenerNotRegistered);

@@ -33,7 +33,7 @@
 
 #include "mongo/db/storage/journal_listener.h"
 #include "mongo/db/storage/kv/kv_engine.h"
-#include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/string_map.h"
 
 namespace mongo {
@@ -108,7 +108,7 @@ public:
     std::vector<std::string> getAllIdents(OperationContext* opCtx) const;
 
     void setJournalListener(JournalListener* jl) final {
-        stdx::unique_lock<stdx::mutex> lk(_mutex);
+        stdx::unique_lock<Mutex> lk(_mutex);
         _journalListener = jl;
     }
 
@@ -127,7 +127,7 @@ public:
 private:
     typedef StringMap<std::shared_ptr<void>> DataMap;
 
-    mutable stdx::mutex _mutex;
+    mutable Mutex _mutex;
     DataMap _dataMap;  // All actual data is owned in here
 
     // Notified when we write as everything is considered "journalled" since repl depends on it.
