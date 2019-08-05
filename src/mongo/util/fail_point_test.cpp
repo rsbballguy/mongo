@@ -47,6 +47,9 @@ using mongo::BSONObj;
 using mongo::FailPoint;
 using mongo::FailPointEnableBlock;
 using mongo::getGlobalFailPointRegistry;
+using mongo::Mutex;
+using mongo::ConditionVariable;
+
 namespace stdx = mongo::stdx;
 
 namespace mongo_test {
