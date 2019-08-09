@@ -85,6 +85,7 @@ private:
 };
 
 class Waitable;
+class ConditionVariable;
 
 namespace stdx {
 
@@ -129,6 +130,7 @@ public:
 
 protected:
     friend class ::mongo::Waitable;
+    friend class ::mongo::ConditionVariable;
 
     /**
      * Runs the callback with the Notifyable registered on the condvar.  This ensures that for the

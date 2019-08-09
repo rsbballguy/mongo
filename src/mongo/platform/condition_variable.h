@@ -35,7 +35,7 @@
 
 namespace mongo {
 class Mutex;
-class ConditionVariable : private stdx::condition_variable {
+class ConditionVariable {
     using lock_t = stdx::unique_lock<Mutex>;
     friend class ::mongo::Waitable;
 
@@ -65,6 +65,11 @@ public:
 
     void notify_one() noexcept;
     void notify_all() noexcept;
+protected:
+  template <typename Callback>
+  void _runWithNotifyable(Notifyable& notifyable, Callback&& cb) noexcept {
+    _condvar._runWithNotifyable(notifyable, cb);
+  }
 
 private:
     stdx::condition_variable_any _condvar;
