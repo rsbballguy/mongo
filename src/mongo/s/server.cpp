@@ -276,6 +276,8 @@ void cleanupTask(ServiceContext* serviceContext) {
 
         ReplicaSetMonitor::shutdown();
 
+        DiagnosticInfo::shutdown();
+
         opCtx->setIsExecutingShutdown();
 
         if (serviceContext) {
