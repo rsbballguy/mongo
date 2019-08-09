@@ -87,6 +87,8 @@ public:
 
     StackTrace makeStackTrace() const;
 
+    static void shutdown();
+
     static std::vector<void*> getBacktraceAddresses();
 
     std::string toString() const;

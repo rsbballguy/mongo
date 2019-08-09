@@ -162,6 +162,7 @@
 #include "mongo/util/cmdline_utils/censor_cmdline.h"
 #include "mongo/util/concurrency/idle_thread_block.h"
 #include "mongo/util/concurrency/thread_name.h"
+#include "mongo/util/diagnostic_info.h"
 #include "mongo/util/exception_filter_win32.h"
 #include "mongo/util/exit.h"
 #include "mongo/util/fail_point_service.h"
@@ -976,6 +977,8 @@ void shutdownTask(const ShutdownTaskArgs& shutdownArgs) {
     IndexBuildsCoordinator::get(serviceContext)->shutdown();
 
     ReplicaSetMonitor::shutdown();
+
+    DiagnosticInfo::shutdown();
 
     if (auto sr = Grid::get(serviceContext)->shardRegistry()) {
         sr->shutdown();

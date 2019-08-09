@@ -103,6 +103,10 @@ void DiagnosticInfo::Diagnostic::clearDiagnostic() {
     }
 }
 
+void DiagnosticInfo::shutdown() {
+    Mutex::setLockActions(nullptr);
+}
+
 #if defined(__linux__)
 namespace {
 

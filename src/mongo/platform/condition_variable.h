@@ -35,7 +35,7 @@
 
 namespace mongo {
 class Mutex;
-class ConditionVariable : private stdx::condition_variable_any {
+class ConditionVariable : private stdx::condition_variable {
     using lock_t = stdx::unique_lock<Mutex>;
     friend class ::mongo::Waitable;
 
