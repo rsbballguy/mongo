@@ -316,14 +316,12 @@ SemiFuture<std::vector<HostAndPort>> ReplicaSetMonitor::getHostsOrRefresh(
 Future<std::vector<HostAndPort>> ReplicaSetMonitor::_getHostsOrRefresh(
     const ReadPreferenceSetting& criteria, Milliseconds maxWait) {
 
-    stdx::lock_guard<stdx::mutex> lk(_state->mutex);
+    stdx::lock_guard<Mutex> lk(_state->mutex);
     if (_state->isDropped) {
         return Status(ErrorCodes::ReplicaSetMonitorRemoved,
                       str::stream() << "ReplicaSetMonitor for set " << getName() << " is removed");
     }
 
-    // Fast path, for the failure-free case
-    stdx::lock_guard<Mutex> lk(_state->mutex);
     auto out = _state->getMatchingHosts(criteria);
     if (!out.empty())
         return {std::move(out)};

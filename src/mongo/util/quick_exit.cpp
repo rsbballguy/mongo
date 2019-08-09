@@ -41,7 +41,7 @@
 #include <cstdlib>
 
 // NOTE: Header only dependencies are OK in this library.
-#include "mongo/platform/mutex.h"
+#include "mongo/stdx/mutex.h"
 
 #if !defined(__has_feature)
 #define __has_feature(x) 0
@@ -74,7 +74,7 @@ extern "C" void __gcov_flush();
 namespace mongo {
 
 namespace {
-Mutex* const quickExitMutex = new Mutex;
+stdx::mutex* const quickExitMutex = new stdx::mutex;
 }  // namespace
 
 void quickExit(int code) {
