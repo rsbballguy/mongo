@@ -56,6 +56,7 @@
 #include "mongo/util/net/socket_utils.h"
 #include "mongo/util/str.h"
 
+
 namespace mongo {
 
 using std::string;
@@ -235,10 +236,7 @@ CurOp* CurOp::get(const OperationContext& opCtx) {
 
 namespace {
 
-struct {
-    Mutex mutex = Mutex("TestMutex"_sd, Seconds(1));
-    stdx::unique_lock<Mutex> lock = stdx::unique_lock<Mutex>(mutex, stdx::defer_lock);
-} gHangLock;
+
 
 }  // namespace
 void CurOp::reportCurrentOpForClient(OperationContext* opCtx,
@@ -247,14 +245,6 @@ void CurOp::reportCurrentOpForClient(OperationContext* opCtx,
                                      bool backtraceMode,
                                      BSONObjBuilder* infoBuilder) {
     invariant(client);
-    if (MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
-        gHangLock.lock.lock();
-        try {
-            stdx::lock_guard testLock(gHangLock.mutex);
-        } catch (const DBException& e) {
-            log() << "Successfully caught " << e;
-        }
-    }
 
     OperationContext* clientOpCtx = client->getOperationContext();
 
@@ -322,11 +312,12 @@ void CurOp::reportCurrentOpForClient(OperationContext* opCtx,
     }
 
     std::shared_ptr<DiagnosticInfo> diagnostic = DiagnosticInfo::Diagnostic::get(client);
-    if (diagnostic && backtraceMode) {
+
+    if (diagnostic) {
         BSONObjBuilder waitingForLatchBuilder(infoBuilder->subobjStart("waitingForLatch"));
         waitingForLatchBuilder.append("timestamp", diagnostic->getTimestamp());
         waitingForLatchBuilder.append("captureName", diagnostic->getCaptureName());
-        {
+        if (backtraceMode) {
             BSONArrayBuilder backtraceBuilder(waitingForLatchBuilder.subarrayStart("backtrace"));
             for (const auto& frame : diagnostic->makeStackTrace().frames) {
                 BSONObjBuilder backtraceObj(backtraceBuilder.subobjStart());
@@ -336,9 +327,6 @@ void CurOp::reportCurrentOpForClient(OperationContext* opCtx,
         }
     }
 
-    if (MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
-        gHangLock.lock.unlock();
-    }
 }
 
 void CurOp::setGenericCursor_inlock(GenericCursor gc) {

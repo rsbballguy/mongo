@@ -9,21 +9,29 @@
 
 const adminDB = db.getSiblingDB("admin");
 
-const getCurrentOp = function() {
-    let myUri = adminDB.runCommand({whatsmyuri: 1}).you;
-    return adminDB
+const getCurrentOp = function(failpointOn) {
+    var diagnostics = adminDB
         .aggregate(
             [
-                {$currentOp: {localOps: true, allUsers: false, backtrace: true}},
-                {$match: {client: myUri}}
+                {$currentOp: {idleConnections: true, backtrace: true}},
             ],
             {readConcern: {level: "local"}})
-        .toArray()[0];
+        .toArray();
+    if (failpointOn == true) {
+        for(var k = 0; k<diagnostics.length; k++) {
+            if (diagnostics[k]["desc"] == "DiagnosticCaptureTest") {
+                return diagnostics[k];
+            }
+        };
+    }
+    else {
+        return diagnostics;
+    }
 };
 
 assert.commandWorked(db.adminCommand(
     {"configureFailPoint": 'keepDiagnosticCaptureOnFailedLock', "mode": 'alwaysOn'}));
-var result = getCurrentOp();
+var result = getCurrentOp(true);
 
 assert(result.hasOwnProperty("waitingForLatch"));
 assert(result["waitingForLatch"].hasOwnProperty("timestamp"));
@@ -38,7 +46,10 @@ result["waitingForLatch"]["backtrace"].forEach(function(obj) {
 
 assert.commandWorked(
     db.adminCommand({"configureFailPoint": 'keepDiagnosticCaptureOnFailedLock', "mode": 'off'}));
-result = getCurrentOp();
 
-assert(!result.hasOwnProperty("waitingForLatch"));
+result = getCurrentOp(false);
+result.forEach(function(elem) {
+    assert(!result.hasOwnProperty("waitingForLatch"));
+})
+
 })();

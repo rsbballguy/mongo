@@ -27,6 +27,8 @@
  *    it in the license file.
  */
 
+#define MONGO_LOG_DEFAULT_COMPONENT ::mongo::logger::LogComponent::kDefault
+
 #include "mongo/platform/basic.h"
 
 #include "mongo/db/pipeline/mongo_process_common.h"
@@ -41,9 +43,16 @@
 #include "mongo/db/service_context.h"
 #include "mongo/s/catalog_cache.h"
 #include "mongo/s/grid.h"
+#include "mongo/util/log.h"
 #include "mongo/util/net/socket_utils.h"
 
 namespace mongo {
+
+struct {
+    Mutex mutex = Mutex("TestMutex"_sd, Seconds(10));
+    stdx::unique_lock<Mutex> lock = stdx::unique_lock<Mutex>(mutex, stdx::defer_lock);
+    stdx::thread thread;
+} gHangLock;
 
 std::vector<BSONObj> MongoProcessCommon::getCurrentOps(
     const boost::intrusive_ptr<ExpressionContext>& expCtx,
@@ -57,6 +66,22 @@ std::vector<BSONObj> MongoProcessCommon::getCurrentOps(
     AuthorizationSession* ctxAuth = AuthorizationSession::get(opCtx->getClient());
 
     std::vector<BSONObj> ops;
+
+    if (MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
+        auto [promise, future] =  makePromiseFuture<void>();
+        gHangLock.thread = stdx::thread([promise = std::move(promise)]() mutable {
+            Client::initThread("DiagnosticCaptureTest");
+            gHangLock.lock.lock();
+            promise.emplaceValue();
+            try {
+                stdx::lock_guard testLock(gHangLock.mutex);
+            } catch (const DBException& e) {
+                log() << "Successfully caught " << e;
+            }
+        });
+        future.get();
+        stdx::this_thread::sleep_for(Milliseconds(100).toSystemDuration());
+    }
 
     for (ServiceContext::LockedClientsCursor cursor(opCtx->getClient()->getServiceContext());
          Client* client = cursor.next();) {
@@ -78,6 +103,11 @@ std::vector<BSONObj> MongoProcessCommon::getCurrentOps(
 
         // Delegate to the mongoD- or mongoS-specific implementation of _reportCurrentOpForClient.
         ops.emplace_back(_reportCurrentOpForClient(opCtx, client, truncateMode, backtraceMode));
+    }
+
+    if (MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
+        gHangLock.lock.unlock();
+        gHangLock.thread.join();
     }
 
     // If 'cursorMode' is set to include idle cursors, retrieve them and add them to ops.
