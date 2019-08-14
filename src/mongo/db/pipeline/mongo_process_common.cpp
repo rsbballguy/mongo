@@ -69,7 +69,7 @@ std::vector<BSONObj> MongoProcessCommon::getCurrentOps(
 
     if (MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
         auto [promise, future] =  makePromiseFuture<void>();
-        gHangLock.thread = stdx::thread([promise = std::move(promise)]() mutable {
+        gHangLock.thread = stdx::thread([&,promise = std::move(promise)]() mutable {
             Client::initThread("DiagnosticCaptureTest");
             gHangLock.lock.lock();
             promise.emplaceValue();
@@ -80,7 +80,7 @@ std::vector<BSONObj> MongoProcessCommon::getCurrentOps(
             }
         });
         future.get();
-        stdx::this_thread::sleep_for(Milliseconds(100).toSystemDuration());
+        stdx::this_thread::sleep_for(Milliseconds(200).toSystemDuration());
     }
 
     for (ServiceContext::LockedClientsCursor cursor(opCtx->getClient()->getServiceContext());

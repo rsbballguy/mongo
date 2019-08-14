@@ -135,7 +135,7 @@ void ReplicationMetrics::incrementNumCatchUps() {
 
 void ReplicationMetrics::incrementNumCatchUpsConcludedForReason(
     ReplicationCoordinator::PrimaryCatchUpConclusionReason reason) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     switch (reason) {
         case ReplicationCoordinator::PrimaryCatchUpConclusionReason::kSucceeded:
             _electionMetrics.setNumCatchUpsSucceeded(_electionMetrics.getNumCatchUpsSucceeded() +
@@ -228,37 +228,37 @@ int ReplicationMetrics::getNumCatchUps_forTesting() {
 }
 
 int ReplicationMetrics::getNumCatchUpsSucceeded_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsSucceeded();
 }
 
 int ReplicationMetrics::getNumCatchUpsAlreadyCaughtUp_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsAlreadyCaughtUp();
 }
 
 int ReplicationMetrics::getNumCatchUpsSkipped_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsSkipped();
 }
 
 int ReplicationMetrics::getNumCatchUpsTimedOut_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsTimedOut();
 }
 
 int ReplicationMetrics::getNumCatchUpsFailedWithError_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsFailedWithError();
 }
 
 int ReplicationMetrics::getNumCatchUpsFailedWithNewTerm_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsFailedWithNewTerm();
 }
 
 int ReplicationMetrics::getNumCatchUpsFailedWithReplSetAbortPrimaryCatchUpCmd_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionMetrics.getNumCatchUpsFailedWithReplSetAbortPrimaryCatchUpCmd();
 }
 

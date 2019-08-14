@@ -13,7 +13,7 @@ const getCurrentOp = function(failpointOn) {
     var diagnostics = adminDB
         .aggregate(
             [
-                {$currentOp: {idleConnections: true, backtrace: true}},
+                {$currentOp: {allUsers: true, idleConnections: true, idleCursors: true, idleSessions: true, localOps: true, backtrace: true}},
             ],
             {readConcern: {level: "local"}})
         .toArray();
@@ -22,7 +22,8 @@ const getCurrentOp = function(failpointOn) {
             if (diagnostics[k]["desc"] == "DiagnosticCaptureTest") {
                 return diagnostics[k];
             }
-        };
+        }
+        return diagnostics;
     }
     else {
         return diagnostics;

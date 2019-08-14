@@ -245,7 +245,9 @@ void CurOp::reportCurrentOpForClient(OperationContext* opCtx,
                                      bool backtraceMode,
                                      BSONObjBuilder* infoBuilder) {
     invariant(client);
-
+    if (client->desc() == "DiagnosticCaptureTest") {
+        log() << "Entered reportCurrentOpForClient";
+    }
     OperationContext* clientOpCtx = client->getOperationContext();
 
     infoBuilder->append("type", "op");
