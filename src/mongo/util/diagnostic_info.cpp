@@ -44,7 +44,6 @@
 
 #include "mongo/base/init.h"
 #include "mongo/db/client.h"
-#include "mongo/platform/mutex.h"
 #include "mongo/util/clock_source.h"
 #include "mongo/util/log.h"
 
@@ -101,10 +100,6 @@ void DiagnosticInfo::Diagnostic::clearDiagnostic() {
     if (haveClient()) {
         DiagnosticInfo::Diagnostic::set(Client::getCurrent(), nullptr);
     }
-}
-
-void DiagnosticInfo::shutdown() {
-    Mutex::setLockActions(nullptr);
 }
 
 #if defined(__linux__)

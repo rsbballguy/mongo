@@ -32,6 +32,7 @@
 #include "mongo/base/string_data.h"
 #include "mongo/db/service_context.h"
 #include "mongo/stdx/mutex.h"
+#include "mongo/platform/mutex.h"
 #include "mongo/util/fail_point_service.h"
 #include "mongo/util/time_support.h"
 
@@ -86,8 +87,10 @@ public:
     }
 
     StackTrace makeStackTrace() const;
-
-    static void shutdown();
+ 
+    static void shutdown() {
+        Mutex::setLockActions(nullptr);
+    }
 
     static std::vector<void*> getBacktraceAddresses();
 
