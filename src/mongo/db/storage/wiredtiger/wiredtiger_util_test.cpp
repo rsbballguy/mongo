@@ -41,6 +41,7 @@
 #include "mongo/db/storage/wiredtiger/wiredtiger_util.h"
 #include "mongo/unittest/temp_dir.h"
 #include "mongo/unittest/unittest.h"
+#include "mongo/util/diagnostic_info.h"
 #include "mongo/util/system_clock_source.h"
 
 namespace mongo {
@@ -140,6 +141,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetConfigurationStringInvalidURI) {
     StatusWith<std::string> result = WiredTigerUtil::getMetadata(getOperationContext(), getURI());
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(ErrorCodes::NoSuchKey, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetConfigurationStringNull) {
@@ -148,6 +150,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetConfigurationStringNull) {
     StatusWith<std::string> result = WiredTigerUtil::getMetadata(getOperationContext(), getURI());
     ASSERT_OK(result.getStatus());
     ASSERT_FALSE(result.getValue().empty());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetConfigurationStringSimple) {
@@ -156,6 +159,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetConfigurationStringSimple) {
     StatusWith<std::string> result = WiredTigerUtil::getMetadata(getOperationContext(), getURI());
     ASSERT_OK(result.getStatus());
     ASSERT_STRING_CONTAINS(result.getValue(), config);
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataInvalidURI) {
@@ -163,6 +167,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataInvalidURI) {
         WiredTigerUtil::getApplicationMetadata(getOperationContext(), getURI());
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(ErrorCodes::NoSuchKey, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataNull) {
@@ -172,6 +177,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataNull) {
         WiredTigerUtil::getApplicationMetadata(getOperationContext(), getURI());
     ASSERT_OK(result.getStatus());
     ASSERT_TRUE(result.getValue().isEmpty());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataString) {
@@ -190,6 +196,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataDuplicateKeys) {
         WiredTigerUtil::getApplicationMetadata(getOperationContext(), getURI());
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(50998, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataTypes) {
@@ -226,6 +233,7 @@ TEST_F(WiredTigerUtilMetadataTest, GetApplicationMetadataTypes) {
     BSONElement structElement = obj.getField("structkey");
     ASSERT_EQUALS(mongo::String, structElement.type());
     ASSERT_EQUALS("(k1=v2,k2=v2)", structElement.String());
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatVersionMissingKey) {
@@ -234,12 +242,14 @@ TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatVersionMissingK
         getOperationContext(), getURI(), 1, 1));
     ASSERT_NOT_OK(WiredTigerUtil::checkApplicationMetadataFormatVersion(
         getOperationContext(), getURI(), 2, 2));
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatVersionString) {
     createSession("app_metadata=(formatVersion=\"bar\")");
     ASSERT_NOT_OK(WiredTigerUtil::checkApplicationMetadataFormatVersion(
         getOperationContext(), getURI(), 1, 1));
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatVersionNumber) {
@@ -252,6 +262,7 @@ TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatVersionNumber) 
         getOperationContext(), getURI(), 1, 1));
     ASSERT_NOT_OK(WiredTigerUtil::checkApplicationMetadataFormatVersion(
         getOperationContext(), getURI(), 3, 3));
+    DiagnosticInfo::shutdown();
 }
 
 TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatInvalidURI) {
@@ -261,6 +272,7 @@ TEST_F(WiredTigerUtilMetadataTest, CheckApplicationMetadataFormatInvalidURI) {
             .getStatus();
     ASSERT_NOT_OK(result);
     ASSERT_EQUALS(ErrorCodes::FailedToParse, result.code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST(WiredTigerUtilTest, GetStatisticsValueMissingTable) {
@@ -274,6 +286,7 @@ TEST(WiredTigerUtilTest, GetStatisticsValueMissingTable) {
                                                      WT_STAT_DSRC_BLOCK_SIZE);
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(ErrorCodes::CursorNotFound, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST(WiredTigerUtilTest, GetStatisticsValueStatisticsDisabled) {
@@ -289,6 +302,7 @@ TEST(WiredTigerUtilTest, GetStatisticsValueStatisticsDisabled) {
                                                      WT_STAT_DSRC_BLOCK_SIZE);
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(ErrorCodes::CursorNotFound, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST(WiredTigerUtilTest, GetStatisticsValueInvalidKey) {
@@ -305,6 +319,7 @@ TEST(WiredTigerUtilTest, GetStatisticsValueInvalidKey) {
                                                      WT_STAT_CONN_SESSION_OPEN);
     ASSERT_NOT_OK(result.getStatus());
     ASSERT_EQUALS(ErrorCodes::NoSuchKey, result.getStatus().code());
+    DiagnosticInfo::shutdown();
 }
 
 TEST(WiredTigerUtilTest, GetStatisticsValueValidKey) {
@@ -322,6 +337,7 @@ TEST(WiredTigerUtilTest, GetStatisticsValueValidKey) {
     ASSERT_OK(result.getStatus());
     // Expect statistics value to be zero for a LSM key on a Btree.
     ASSERT_EQUALS(0U, result.getValue());
+    DiagnosticInfo::shutdown();
 }
 
 }  // namespace mongo

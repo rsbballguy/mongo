@@ -263,13 +263,13 @@ int ReplicationMetrics::getNumCatchUpsFailedWithReplSetAbortPrimaryCatchUpCmd_fo
 }
 
 void ReplicationMetrics::setElectionCandidateMetrics(Date_t lastElectionDate) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _electionCandidateMetrics.setLastElectionDate(lastElectionDate);
     _nodeIsCandidateOrPrimary = true;
 }
 
 void ReplicationMetrics::setTargetCatchupOpTime(OpTime opTime) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _electionCandidateMetrics.setTargetCatchupOpTime(opTime);
 }
 
@@ -279,12 +279,12 @@ void ReplicationMetrics::setNumCatchUpOps(int numCatchUpOps) {
 }
 
 void ReplicationMetrics::setNewTermStartDate(Date_t newTermStartDate) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _electionCandidateMetrics.setNewTermStartDate(newTermStartDate);
 }
 
 boost::optional<OpTime> ReplicationMetrics::getTargetCatchupOpTime_forTesting() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     return _electionCandidateMetrics.getTargetCatchupOpTime();
 }
 
@@ -294,7 +294,7 @@ BSONObj ReplicationMetrics::getElectionMetricsBSON() {
 }
 
 BSONObj ReplicationMetrics::getElectionCandidateMetricsBSON() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     if (_nodeIsCandidateOrPrimary) {
         return _electionCandidateMetrics.toBSON();
     }
@@ -302,7 +302,7 @@ BSONObj ReplicationMetrics::getElectionCandidateMetricsBSON() {
 }
 
 void ReplicationMetrics::clearElectionCandidateMetrics() {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _electionCandidateMetrics.setTargetCatchupOpTime(boost::none);
     _electionCandidateMetrics.setNumCatchUpOps(boost::none);
     _electionCandidateMetrics.setNewTermStartDate(boost::none);

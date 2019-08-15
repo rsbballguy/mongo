@@ -37,6 +37,7 @@
 #include "mongo/db/storage/wiredtiger/wiredtiger_util.h"
 #include "mongo/unittest/temp_dir.h"
 #include "mongo/unittest/unittest.h"
+#include "mongo/util/diagnostic_info.h"
 #include "mongo/util/system_clock_source.h"
 
 namespace mongo {
@@ -111,6 +112,8 @@ TEST(WiredTigerSessionCacheTest, CheckSessionCacheCleanup) {
     // Expire sessions that have been idle for 2 millisecs
     sessionCache->closeExpiredIdleSessions(2);
     ASSERT_EQUALS(sessionCache->getIdleSessionsCount(), 0U);
+
+    DiagnosticInfo::shutdown();
 }
 
 }  // namespace mongo
