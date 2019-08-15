@@ -90,7 +90,14 @@ private:
     WiredTigerSessionCache _sessionCache;
 };
 
-TEST(WiredTigerSessionCacheTest, CheckSessionCacheCleanup) {
+class WiredTigerSessionCacheTest : public mongo::unittest::Test {
+public:
+    virtual void tearDown() {
+        DiagnosticInfo::shutdown();
+    }
+};
+
+TEST_F(WiredTigerSessionCacheTest, CheckSessionCacheCleanup) {
     WiredTigerSessionCacheHarnessHelper harnessHelper("");
     WiredTigerSessionCache* sessionCache = harnessHelper.getSessionCache();
     ASSERT_EQUALS(sessionCache->getIdleSessionsCount(), 0U);
@@ -113,7 +120,6 @@ TEST(WiredTigerSessionCacheTest, CheckSessionCacheCleanup) {
     sessionCache->closeExpiredIdleSessions(2);
     ASSERT_EQUALS(sessionCache->getIdleSessionsCount(), 0U);
 
-    DiagnosticInfo::shutdown();
 }
 
 }  // namespace mongo
