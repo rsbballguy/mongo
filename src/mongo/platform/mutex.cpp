@@ -36,25 +36,26 @@ std::unique_ptr<LockActions> gLockActions;
 }
 
 void Mutex::lock() {
-    auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
-    if (hasLock) {
-        return;
-    }
-    if (gLockActions) {
-        gLockActions->onContendedLock(_name);
-    }
-    hasLock = _mutex.try_lock_for(_lockTimeout.toSystemDuration() -
-                                  kContendedLockTimeout.toSystemDuration());
-    if (gLockActions && !hasLock) {
-        gLockActions->onFailedLock();
-    }
-    uassert(
-        ErrorCodes::InternalError, "Unable to take latch, wait time exceeds set timeout", hasLock);
+    _mutex.lock();
+    // auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
+    // if (hasLock) {
+    //     return;
+    // }
+    // if (gLockActions) {
+    //     gLockActions->onContendedLock(_name);
+    // }
+    // hasLock = _mutex.try_lock_for(_lockTimeout.toSystemDuration() -
+    //                               kContendedLockTimeout.toSystemDuration());
+    // if (gLockActions && !hasLock) {
+    //     gLockActions->onFailedLock();
+    // }
+    // uassert(
+    //     ErrorCodes::InternalError, "Unable to take latch, wait time exceeds set timeout", hasLock);
 }
 void Mutex::unlock() {
-    if (gLockActions) {
-        gLockActions->onUnlock();
-    }
+    // if (gLockActions) {
+    //     gLockActions->onUnlock();
+    // }
     _mutex.unlock();
 }
 bool Mutex::try_lock() {
