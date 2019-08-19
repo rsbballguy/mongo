@@ -63,7 +63,7 @@ public:
 private:
     const StringData _name;
     const Seconds _lockTimeout = Seconds(60);
-    static constexpr Milliseconds kContendedLockTimeout = Milliseconds(100);
+    static constexpr Milliseconds kContendedLockTimeout = Milliseconds(500);
     stdx::timed_mutex _mutex;
 };
 

@@ -3160,7 +3160,7 @@ Status ReplicationCoordinatorImpl::abortCatchupIfNeeded(PrimaryCatchUpConclusion
 }
 
 void ReplicationCoordinatorImpl::incrementNumCatchUpOpsIfCatchingUp(int numOps) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     if (_catchupState) {
         _catchupState->incrementNumCatchUpOps_inlock(numOps);
     }

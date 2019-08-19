@@ -274,7 +274,7 @@ void ReplicationMetrics::setTargetCatchupOpTime(OpTime opTime) {
 }
 
 void ReplicationMetrics::setNumCatchUpOps(int numCatchUpOps) {
-    stdx::lock_guard<stdx::mutex> lk(_mutex);
+    stdx::lock_guard<Mutex> lk(_mutex);
     _electionCandidateMetrics.setNumCatchUpOps(numCatchUpOps);
 }
 

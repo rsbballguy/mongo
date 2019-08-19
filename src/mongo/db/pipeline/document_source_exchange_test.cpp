@@ -65,7 +65,7 @@ namespace {
  */
 class MutexYielder : public ResourceYielder {
 public:
-    MutexYielder(stdx::mutex* mutex) : _lock(*mutex, stdx::defer_lock) {}
+    MutexYielder(Mutex* mutex) : _lock(*mutex, stdx::defer_lock) {}
 
     void yield(OperationContext* opCtx) override {
         _lock.unlock();
@@ -75,12 +75,12 @@ public:
         _lock.lock();
     }
 
-    stdx::unique_lock<stdx::mutex>& getLock() {
+    stdx::unique_lock<Mutex>& getLock() {
         return _lock;
     }
 
 private:
-    stdx::unique_lock<stdx::mutex> _lock;
+    stdx::unique_lock<Mutex> _lock;
 };
 
 /**

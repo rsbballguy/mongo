@@ -61,19 +61,19 @@ MONGO_INITIALIZER(LockActions)(InitializerContext* context) {
 
     class LockActionsSubclass : public LockActions {
         void onContendedLock(const StringData& name) override {
-            if (haveClient()) {
-                DiagnosticInfo::Diagnostic::set(
-                    Client::getCurrent(),
-                    std::make_shared<DiagnosticInfo>(takeDiagnosticInfo(name)));
-            }
+            // if (haveClient()) {
+            //     DiagnosticInfo::Diagnostic::set(
+            //         Client::getCurrent(),
+            //         std::make_shared<DiagnosticInfo>(takeDiagnosticInfo(name)));
+            // }
         }
         void onUnlock() override {
-            DiagnosticInfo::Diagnostic::clearDiagnostic();
+            // DiagnosticInfo::Diagnostic::clearDiagnostic();
         }
         void onFailedLock() override {
-            if (!MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
-                DiagnosticInfo::Diagnostic::clearDiagnostic();
-            }
+            // if (!MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
+            //     DiagnosticInfo::Diagnostic::clearDiagnostic();
+            // }
         }
     };
     std::unique_ptr<LockActions> myPointer = std::make_unique<LockActionsSubclass>();
