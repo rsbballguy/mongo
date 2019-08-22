@@ -57,30 +57,30 @@ MONGO_FAIL_POINT_DEFINE(keepDiagnosticCaptureOnFailedLock);
 namespace {
 const auto gDiagnosticHandle = Client::declareDecoration<DiagnosticInfo::Diagnostic>();
 
-// MONGO_INITIALIZER(LockActions)(InitializerContext* context) {
+MONGO_INITIALIZER(LockActions)(InitializerContext* context) {
 
-//     class LockActionsSubclass : public LockActions {
-//         void onContendedLock(const StringData& name) override {
-//             if (haveClient()) {
-//                 DiagnosticInfo::Diagnostic::set(
-//                     Client::getCurrent(),
-//                     std::make_shared<DiagnosticInfo>(takeDiagnosticInfo(name)));
-//             }
-//         }
-//         void onUnlock() override {
-//             DiagnosticInfo::Diagnostic::clearDiagnostic();
-//         }
-//         void onFailedLock() override {
-//             if (!MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
-//                 DiagnosticInfo::Diagnostic::clearDiagnostic();
-//             }
-//         }
-//     };
-//     std::unique_ptr<LockActions> myPointer = std::make_unique<LockActionsSubclass>();
-//     Mutex::setLockActions(std::move(myPointer));
+    class LockActionsSubclass : public LockActions {
+        void onContendedLock(const StringData& name) override {
+            if (haveClient()) {
+                DiagnosticInfo::Diagnostic::set(
+                    Client::getCurrent(),
+                    std::make_shared<DiagnosticInfo>(takeDiagnosticInfo(name)));
+            }
+        }
+        void onUnlock() override {
+            DiagnosticInfo::Diagnostic::clearDiagnostic();
+        }
+        void onFailedLock() override {
+            if (!MONGO_FAIL_POINT(keepDiagnosticCaptureOnFailedLock)) {
+                DiagnosticInfo::Diagnostic::clearDiagnostic();
+            }
+        }
+    };
+    std::unique_ptr<LockActions> myPointer = std::make_unique<LockActionsSubclass>();
+    Mutex::setLockActions(std::move(myPointer));
 
-//     return Status::OK();
-// }
+    return Status::OK();
+}
 }  // namespace
 
 auto DiagnosticInfo::Diagnostic::get(Client* const client) -> std::shared_ptr<DiagnosticInfo> {

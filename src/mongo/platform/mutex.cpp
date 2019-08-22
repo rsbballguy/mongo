@@ -36,14 +36,14 @@ std::unique_ptr<LockActions> gLockActions;
 }
 
 void Mutex::lock() {
-    auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
-    if (hasLock) {
-        return;
-    }
+    // auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
+    // if (hasLock) {
+    //     return;
+    // }
     if (gLockActions) {
         gLockActions->onContendedLock(_name);
     }
-    hasLock = _mutex.try_lock_for(_lockTimeout.toSystemDuration() -
+    auto hasLock = _mutex.try_lock_for(_lockTimeout.toSystemDuration() -
                                   kContendedLockTimeout.toSystemDuration());
     if (gLockActions && !hasLock) {
         gLockActions->onFailedLock();
