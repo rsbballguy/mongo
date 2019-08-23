@@ -28,7 +28,7 @@
  */
 
 #include "mongo/platform/mutex.h"
-
+#include <iostream>
 namespace mongo {
 
 namespace {
@@ -36,10 +36,10 @@ std::unique_ptr<LockActions> gLockActions;
 }
 
 void Mutex::lock() {
-    // auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
-    // if (hasLock) {
-    //     return;
-    // }
+    //auto hasLock = _mutex.try_lock_for(kContendedLockTimeout.toSystemDuration());
+    //if (hasLock) {
+    //    return;
+    //}
     if (gLockActions) {
         gLockActions->onContendedLock(_name);
     }

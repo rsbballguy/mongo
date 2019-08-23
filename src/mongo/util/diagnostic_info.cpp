@@ -38,6 +38,7 @@
 #include <execinfo.h>
 #include <link.h>
 #endif
+#include <iostream>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -61,10 +62,15 @@ MONGO_INITIALIZER(LockActions)(InitializerContext* context) {
 
     class LockActionsSubclass : public LockActions {
         void onContendedLock(const StringData& name) override {
-            if (haveClient()) {
+            if (haveClient() && hasGlobalServiceContext()) {
+                std::cout << "Has Client\n";
+                std::cout << Client::getCurrent()->desc() << "\n";
                 DiagnosticInfo::Diagnostic::set(
                     Client::getCurrent(),
                     std::make_shared<DiagnosticInfo>(takeDiagnosticInfo(name)));
+            }
+            else{
+                std::cout << "Doesn't have client \n";
             }
         }
         void onUnlock() override {
@@ -198,6 +204,7 @@ DiagnosticInfo::StackTrace DiagnosticInfo::makeStackTrace() const {
 }
 
 static std::vector<void*> getBacktraceAddresses() {
+    std::cout << "getBacktraceAddresses\n";
     return std::vector<void*>();
 }
 #endif

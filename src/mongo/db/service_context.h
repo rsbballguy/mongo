@@ -50,6 +50,8 @@
 #include "mongo/util/periodic_runner.h"
 #include "mongo/util/tick_source.h"
 
+#include <iostream>
+
 namespace mongo {
 
 class AbstractMessagingPort;
@@ -457,6 +459,8 @@ public:
      * may be cheaper to call.
      */
     ClockSource* getFastClockSource() const {
+        std::cout << "fastClockSource\n";
+        std::cout << _fastClockSource;
         return _fastClockSource.get();
     }
 

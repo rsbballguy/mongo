@@ -52,6 +52,7 @@
 #include "mongo/util/str.h"
 #include "mongo/util/system_clock_source.h"
 #include "mongo/util/system_tick_source.h"
+#include <iostream>
 
 namespace mongo {
 namespace {
@@ -70,6 +71,7 @@ bool hasGlobalServiceContext() {
 
 ServiceContext* getGlobalServiceContext() {
     fassert(17508, globalServiceContext);
+    std::cout << "global service context \n";
     return globalServiceContext;
 }
 

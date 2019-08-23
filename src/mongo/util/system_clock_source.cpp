@@ -32,17 +32,20 @@
 #include "mongo/util/system_clock_source.h"
 
 #include <memory>
-
+#include <iostream>
 #include "mongo/util/time_support.h"
 
 namespace mongo {
 
 Date_t SystemClockSource::now() {
+	std::cout << "now()\n";
     return Date_t::now();
 }
 
 SystemClockSource* SystemClockSource::get() {
+	std::cout << "get() Line 1\n";
     static const auto globalSystemClockSource = std::make_unique<SystemClockSource>();
+    std::cout << "get() Line 2\n";
     return globalSystemClockSource.get();
 }
 
